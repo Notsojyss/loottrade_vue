@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /loot_trade/
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /loot_trade/index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header set Strict-Transport-Security "max-age=31536000" env=HTTPS
+</IfModule>
+
+<Files .env>
+  Order allow,deny
+  Deny from all
+</Files>
