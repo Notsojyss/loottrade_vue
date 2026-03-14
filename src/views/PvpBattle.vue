@@ -286,7 +286,7 @@ export default {
                 <div class="listing-body">
                     <p class="wager"><img alt="Coin Image" class="coin-icon" src="/src/assets/rotating-coin.gif" width="30" height="30" />{{ pvp.money_betted }}</p>
 
-                    <button class="join-btn" @click= "handleJoin(user.id,pvp.id,pvp.money_betted,pvp.username )">Join Battle</button>
+                    <button class="join-btn" @click= "handleJoin(user.id,pvp.id,pvp.money_betted,pvp.user.first_name )">Join Battle</button>
                 </div>
             </div>
         </div>
@@ -387,8 +387,8 @@ export default {
         <div class="modal-pick-play">
             <div class="modal-pick-play-header">
                 <h3 class="pick-play-header-select">Select your Play:</h3>
-                <h3 class="host-name-pick-play">{{selectedPvpUsername}}</h3>
-                <h3 class="opponent-pick-play">{{this.user.username}}</h3>
+                <h3 class="host-name-pick-play">{{selectedPvpUsername.toLowerCase()}}</h3>
+                <h3 class="opponent-pick-play">{{this.user.username.toLowerCase()}}</h3>
                 <button class="modal-play-close-btn" @click="handleClose()">Close</button>
             </div>
 
@@ -571,7 +571,7 @@ body.modal-open {
   pointer-events: auto;
 }
 .modal-create-battle{
-    position: fixed;
+    position: static;
     top: 30%;
     left: 22.5%;
     border: black solid;
@@ -631,9 +631,9 @@ body.modal-open {
 
 .confirm-btn-create {
     display: block;
-    position: fixed;
-    top: 520px;
-    left:760px ;
+    position: absolute;
+    top: 575px;
+    left:965px ;
     padding: 10px 20px;
     font-size: 16px;
     background-color: #28a745;
@@ -646,8 +646,8 @@ body.modal-open {
 .modal-create-battle-close-btn{
     display: block;
     position: fixed;
-    top: 520px;
-    left:600px ;
+    top: 575px;
+    left:800px ;
     padding: 10px 20px;
     font-size: 16px;
     background-color: #fd0101;
@@ -658,9 +658,7 @@ body.modal-open {
     width: 150px;
 }
 .modal-pick-play{
-    position: fixed;
-    top: 25%;
-    left: 22.5%;
+    position: relative;
     border: black solid;
     border-radius: 12px;
     justify-content: center;
@@ -684,16 +682,17 @@ body.modal-open {
 }
 
 .host-name-pick-play{
-    position: relative;
-    color: white;
-    top: 195px;
-    left: -190px;
+  position: absolute;
+  color: white;
+  top: 200px;
+  left: -150px;
   text-align: center;
-}.opponent-pick-play{
-    position: relative;
+}
+.opponent-pick-play{
+    position: absolute;
     color: white;
-    top: 165px;
-    left: 195px;
+    top: 200px;
+    left: 235px;
   text-align: center;
 }
 
@@ -707,10 +706,9 @@ body.modal-open {
 
 }
 .modal-play-close-btn{
-    display: block;
-    position: fixed;
-    top: 580px;
-    left:675px ;
+    position: absolute;
+    top: 360px;
+    left: 0px ;
     padding: 10px 20px;
     font-size: 16px;
     background-color: #fd0101;
@@ -1040,18 +1038,11 @@ body.modal-open {
     object-fit: contain;
 }
 .pvpresult {
-    position: relative;
-    top: 77%;
-    left: 49%;
-    transform: translate(-50%, -50%);
-    color: #050505;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    font-family: "Brush Script MT";
-
+  position: absolute;
+  top: 70%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 50px;
 }
 /* Selected Play & Bet Highlight */
 .selected {
@@ -1059,8 +1050,8 @@ body.modal-open {
     background-color: lightgreen;
 }
 .bet-header {
-    position: fixed;
-    top:    430px;
+    position: absolute;
+    top:    485px;
     color: white;
 }
 
@@ -1070,7 +1061,7 @@ body.modal-open {
     position: fixed;
     justify-content: center;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 75px;
 }
 
 .bet-option {
@@ -1311,12 +1302,14 @@ background: gold;
   border-radius: 5px;
 }
 .sortingbet{
-    position: absolute;
-    height: 100px;
-    top: 150px;
-    right: 540px;
-    z-index: 2;
-    color: whitesmoke;
+  position: absolute;
+  top: 230px;
+  left: 59%;
+  transform: translateX(-50%);
+  height: 100px;
+  z-index: 2;
+  color: whitesmoke;
+  font-size: 16px;
 }
 </style>
 

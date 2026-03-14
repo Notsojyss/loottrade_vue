@@ -54,7 +54,7 @@ export default {
 
 <template>
     <div v-if="!authStore.user" class="forms">
-        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="200" height="140" />
+        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="400" height="300" />
         <h1>Sign In</h1>
 
 
@@ -72,10 +72,10 @@ export default {
 .forms {
     position: absolute;
     top: 170px;
-    left: 580px;
-    width: 400px;
-    min-height: 500px;
-    padding: 20px;
+    left: 550px;
+    width: 800px;
+    min-height: 720px;
+    padding: 0px;
     background: linear-gradient(45deg, #000000 60%, #8f8f8f);
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -97,7 +97,7 @@ export default {
 }
 .forms input {
     color: white;
-    width: 100%;
+    width: 60%;
     padding: 10px;
     margin: 12px 0;
     border: 1px solid #ddd;
@@ -113,7 +113,7 @@ export default {
 }
 
 .forms button {
-    width: 100%;
+    width: 60%;
     padding: 10px;
     margin-top: 10px;
     border: none;

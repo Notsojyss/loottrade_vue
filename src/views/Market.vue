@@ -518,11 +518,11 @@ button:hover {
     padding: 20px;
     border-radius: 8px;
     text-align: center;
-    left: 160px;
+    left: 362px;
     max-width: 1200px;
     min-width: 1200px;
-    min-height: 520px;
-    max-height: 520px;
+    min-height: 620px;
+    max-height: 620px;
     border: black solid 2px;
 }
 .modal-content-buy-list-header h2{
@@ -530,9 +530,9 @@ button:hover {
 }
 
 .modal-content-buy-list .close-btn{
-    position: fixed;
-    top: 595px;
-    right: 740px;
+    position: absolute;
+    top: 555px;
+    right: 565px;
 }
 
 .listing-grid {
@@ -757,36 +757,38 @@ color: whitesmoke;
    z-index: 1000;
  }
 .modal-content-sell-list {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: fixed;
-  background: linear-gradient(135deg, #222, #444);
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    position: fixed;
-    left: 160px;
-    max-width: 1200px;
-    min-width: 1200px;
-    min-height: 520px;
-    max-height: 520px;
-    border: black solid 2px;
-
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  left: 362px;
+  max-width: 1200px;
+  min-width: 1200px;
+  min-height: 620px;
+  max-height: 620px;
+  border: black solid 2px;
 }
 .modal-content-sell-list .modal-content-sell-list-close-btn{
-    position: fixed;
-    top: 600px;
-    right: 725px;
+  position: absolute;
+  top: 555px;
+  right: 565px;
 }
 
 .modal-content-sell-input{
-    background: linear-gradient(135deg, #fafafa, #f8b1b1);
+  background:#373737FF;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     padding: 2rem;
     width: 280px;
     text-align: center;
+}
+.modal-content-sell-input h3,
+.modal-content-sell-input label{
+  color: white;
 }
 
 .item-list{

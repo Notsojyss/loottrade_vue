@@ -57,7 +57,7 @@ body{
 .landing {
     margin-right: 80px;
     width: 90%;
-    height: 643px;
+    height: 650px;
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -69,7 +69,7 @@ body{
 .landing h1{
     position: absolute;
     top:250px;
-    left: 425px;
+    left: 605px;
     font-weight: bold;
     font-size: 70px;
     font-family: "Brush Script MT";
@@ -78,7 +78,7 @@ body{
 .landing p{
     position: absolute;
     top:350px;
-    left: 560px;
+    left: 720px;
     font-weight: bold;
     font-size: 18px;
     font-family: "Brush Script MT";
@@ -86,7 +86,7 @@ body{
 }
 .loot-trade-a{
     top:100px;
-    left: 10px;
+    left: 100px;
     font-weight: bold;
     font-size: 70px;
     font-family: "Brush Script MT";
@@ -121,7 +121,7 @@ body{
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     text-align: center;
     position: relative;
-    top: 220px;
+    top: 120px;
 }
 
 .feature-card h2{

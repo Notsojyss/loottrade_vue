@@ -82,7 +82,7 @@ export default {
 <template>
 
     <div class="forms">
-        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="200" height="140" />
+        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="300" height="250" />
         <h1>Register</h1>
         <input v-model="form.username" placeholder="Username" /><br>
         <input v-model="form.password" placeholder="Password" type="password" minlength="8"/><br>
@@ -91,12 +91,12 @@ export default {
         <input v-model="form.last_name" placeholder="Last Name" /><br>
         <input v-model="form.email" placeholder="Email" type="email"/><br>
         <input v-model="form.confirmEmail" placeholder="Confirm Email" type="email"/><br>
-
+        <button @click = "registerUser">Register</button>
         <p class="login-link">
             Already have an account?
             <router-link class="logintxt" to="/loginform">Login</router-link>
         </p>
-        <button @click = "registerUser">Register</button>
+
 
         <br><br>
 
@@ -105,20 +105,21 @@ export default {
 
 <style scoped>
 .forms {
-    position: absolute;
-    top: 100px;
-    left: 500px;
-    width: 600px;
-    height: 630px;
-    padding: 20px;
-    background: linear-gradient(45deg, #000000 60%, #8f8f8f);
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
+  position: absolute;
+  top: 150px;
+  left: 550px;
+  width: 800px;
+  min-height: 720px;
+  padding: 0px;
+  background: linear-gradient(45deg, #000000 60%, #8f8f8f);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+
 }
 .logo{
     position: relative;
-    top: -20px;
+    top: 0px;
 }
 .forms h1{
     position: relative;
@@ -127,8 +128,8 @@ export default {
 .forms input {
     position: relative;
     top: -30px;
-    width: 100%;
-    padding: 10px;
+    width: 60%;
+    padding: 20px;
     margin: 6px 0;
     border: 1px solid #ddd;
     height: 30px;
@@ -145,9 +146,9 @@ export default {
 }
 
 .forms button {
-    width: 100%;
+    width: 60%;
     padding: 10px;
-    margin-top: 10px;
+    margin-top: 0px;
     border: none;
     background: #494848;
     color: white;
@@ -162,7 +163,7 @@ export default {
 }
 .login-link{
     color: #8e918e;
-    margin-top: -30px;
+    margin-top: 0px;
 }
 .logintxt{
     text-decoration: underline;

@@ -288,12 +288,17 @@ export default {
 
 .modal-content {
     justify-content: center;
-    background: linear-gradient(135deg, #fafafa, #f8b1b1);
+    background: #373737;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     padding: 2rem;
-    width: 280px;
+    width: 320px;
+   height: 300px;
     text-align: center;
+}
+.modal-content p,
+.modal-content h3 {
+  color: white;
 }
 
 .modal-content button {

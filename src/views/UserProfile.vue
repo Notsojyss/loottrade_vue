@@ -113,8 +113,8 @@ export default {
 <style scoped>
 .forms {
     position: absolute;
-    top: 100px;
-    left: 500px;
+    top: 200px;
+    left: 650px;
     width: 600px;
     height: 630px;
     padding: 20px;
