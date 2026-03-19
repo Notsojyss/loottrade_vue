@@ -39,7 +39,7 @@ export default {
     const data = await response.json();
     console.log("Login successful:");
     this.authStore.login(data.user, data.token);
-    this.authStore.fetchMoney();
+    await this.authStore.fetchMoney();
 
     alert(data.message);
     this.$router.push('/landingpage');
@@ -53,91 +53,48 @@ export default {
 </script>
 
 <template>
-    <div v-if="!authStore.user" class="forms">
-        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="400" height="300" />
-        <h1>Sign In</h1>
+  <div v-if="!authStore.user" class="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-8">
+    <div
+        class="forms w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl bg-gradient-to-br from-black to-gray-500 p-6 sm:p-8 md:p-10 text-center shadow-xl"
+    >
+      <img
+          alt="Vue logo"
+          class="logo mx-auto mb-4 w-40 sm:w-52 md:w-64 h-auto"
+          src="../../assets/LTlogo.png"
+      />
 
+      <h1 class="mb-6 text-2xl sm:text-3xl font-bold text-white">Sign In</h1>
 
-        <input v-model="logindata.username" placeholder="Username" />
-        <input v-model="logindata.password" placeholder="Password" type="password" />
-        <button @click="loginUser">Login</button>
-        <p class="login-link">
-            Don't have an account?
-            <router-link class="registertxt " to="/registrationform">Register</router-link>
-        </p>
+      <div class="flex flex-col gap-4">
+        <input
+            v-model="logindata.username"
+            placeholder="Username"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <input
+            v-model="logindata.password"
+            placeholder="Password"
+            type="password"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <button
+            @click="loginUser"
+            class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm sm:text-base font-semibold text-white hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
+      </div>
+
+      <p class="login-link mt-5 text-sm sm:text-base text-white">
+        Don't have an account?
+        <router-link class="registertxt ml-1 text-blue-300 hover:text-blue-400 underline" to="/registrationform">
+          Register
+        </router-link>
+      </p>
     </div>
+  </div>
 </template>
 
-<style scoped>
-.forms {
-    position: absolute;
-    top: 170px;
-    left: 550px;
-    width: 800px;
-    min-height: 720px;
-    padding: 0px;
-    background: linear-gradient(45deg, #000000 60%, #8f8f8f);
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
 
-}
-.logo{
-    position: relative;
-    top: 0px;
-}
-.forms h1{
-    position: relative;
-    top: -20px;
-    color:#8e918e;
-}
-.disabled-form {
-    opacity: 0.5;
-    pointer-events: none; /* Prevent clicks and interactions */
-}
-.forms input {
-    color: white;
-    width: 60%;
-    padding: 10px;
-    margin: 12px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: 0.3s ease;
-    background: #282828;
-}
-
-.forms input:focus {
-    transform: scale(102%);
-    box-shadow: 0 0 5px rgba(67, 124, 71, 0.5);
-}
-
-.forms button {
-    width: 60%;
-    padding: 10px;
-    margin-top: 10px;
-    border: none;
-    background: #494848;
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.forms button:hover {
-    background: #ff0000;
-}
-.login-link{
-    color: #8e918e;
-    margin-top: 10px;
-}
-.registertxt{
-    text-decoration: underline;
-    color: white;
-    font-weight: bold;
-}.registertxt:hover{
-    color: #ff0000;
-
-}
-</style>

@@ -80,97 +80,90 @@ export default {
 </script>
 
 <template>
+  <div class="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-8">
+    <div
+        class="forms w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl bg-gradient-to-br from-black to-gray-500 p-6 sm:p-8 md:p-10 text-center shadow-xl"
+    >
+      <!-- Logo -->
+      <img
+          alt="Vue logo"
+          class="logo mx-auto mb-4 w-40 sm:w-52 md:w-64 h-auto"
+          src="../../assets/LTlogo.png"
+      />
 
-    <div class="forms">
-        <img alt="Vue logo" class="logo" src="../../assets/LTlogo.png" width="300" height="250" />
-        <h1>Register</h1>
-        <input v-model="form.username" placeholder="Username" /><br>
-        <input v-model="form.password" placeholder="Password" type="password" minlength="8"/><br>
-        <input v-model="form.confirmPassword" placeholder="Confirm Password" type="password" minlength="8"/><br>
-        <input v-model="form.first_name" placeholder="First Name" /><br>
-        <input v-model="form.last_name" placeholder="Last Name" /><br>
-        <input v-model="form.email" placeholder="Email" type="email"/><br>
-        <input v-model="form.confirmEmail" placeholder="Confirm Email" type="email"/><br>
-        <button @click = "registerUser">Register</button>
-        <p class="login-link">
-            Already have an account?
-            <router-link class="logintxt" to="/loginform">Login</router-link>
-        </p>
+      <!-- Title -->
+      <h1 class="mb-6 text-2xl sm:text-3xl font-bold text-white">Register</h1>
 
+      <!-- Inputs -->
+      <div class="flex flex-col gap-4">
+        <input
+            v-model="form.username"
+            placeholder="Username"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
 
-        <br><br>
+        <input
+            v-model="form.password"
+            placeholder="Password"
+            type="password"
+            minlength="8"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
 
+        <input
+            v-model="form.confirmPassword"
+            placeholder="Confirm Password"
+            type="password"
+            minlength="8"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <input
+            v-model="form.first_name"
+            placeholder="First Name"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <input
+            v-model="form.last_name"
+            placeholder="Last Name"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <input
+            v-model="form.email"
+            placeholder="Email"
+            type="email"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <input
+            v-model="form.confirmEmail"
+            placeholder="Confirm Email"
+            type="email"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
+        />
+
+        <!-- Button -->
+        <button
+            @click="registerUser"
+            class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm sm:text-base font-semibold text-white hover:bg-green-700 transition"
+        >
+          Register
+        </button>
+      </div>
+
+      <!-- Footer -->
+      <p class="login-link mt-5 text-sm sm:text-base text-white">
+        Already have an account?
+        <router-link
+            class="logintxt ml-1 text-blue-300 hover:text-blue-400 underline"
+            to="/loginform"
+        >
+          Login
+        </router-link>
+      </p>
     </div>
+  </div>
 </template>
 
-<style scoped>
-.forms {
-  position: absolute;
-  top: 150px;
-  left: 550px;
-  width: 800px;
-  min-height: 720px;
-  padding: 0px;
-  background: linear-gradient(45deg, #000000 60%, #8f8f8f);
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-
-}
-.logo{
-    position: relative;
-    top: 0px;
-}
-.forms h1{
-    position: relative;
-    top:-40px;
-}
-.forms input {
-    position: relative;
-    top: -30px;
-    width: 60%;
-    padding: 20px;
-    margin: 6px 0;
-    border: 1px solid #ddd;
-    height: 30px;
-    border-radius: 5px;
-    font-size: 16px;
-    transition: 0.3s ease;
-    background: #282828;
-    color: white;
-}
-
-.forms input:focus {
-    transform: scale(102%);
-    box-shadow: 0 0 5px rgba(67, 124, 71, 0.5);
-}
-
-.forms button {
-    width: 60%;
-    padding: 10px;
-    margin-top: 0px;
-    border: none;
-    background: #494848;
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-
-.forms button:hover {
-    background: #ff0000;
-}
-.login-link{
-    color: #8e918e;
-    margin-top: 0px;
-}
-.logintxt{
-    text-decoration: underline;
-    color: white;
-    font-weight: bold;
-}.logintxt:hover{
-     color: #ff0000;
-
- }
-</style>
