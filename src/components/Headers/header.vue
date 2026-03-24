@@ -49,8 +49,8 @@ onMounted(() => {
 
       <!-- Desktop Navigation -->
       <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-medium">
+        <RouterLink to="/landingpage" class="hover:text-red-400 py-2">Home</RouterLink>
         <RouterLink to="/pvp" class="hover:text-red-400 transition-colors">PVP Battle</RouterLink>
-        <RouterLink to="/landingpage" class="hover:text-red-400 transition-colors">Home</RouterLink>
         <RouterLink to="/market" class="hover:text-red-400 transition-colors">Marketplace</RouterLink>
         <RouterLink to="/shop" class="hover:text-red-400 transition-colors">Shop</RouterLink>
         <RouterLink to="/inventory" class="hover:text-red-400 transition-colors">Inventory</RouterLink>
@@ -134,8 +134,8 @@ onMounted(() => {
     <!-- Mobile Menu -->
     <div v-if="mobileMenuOpen" class="md:hidden px-4 pb-4">
       <nav class="flex flex-col gap-2 text-sm font-medium">
-        <RouterLink to="/pvp" class="hover:text-red-400 py-2">PVP Battle</RouterLink>
         <RouterLink to="/landingpage" class="hover:text-red-400 py-2">Home</RouterLink>
+        <RouterLink to="/pvp" class="hover:text-red-400 py-2">PVP Battle</RouterLink>
         <RouterLink to="/market" class="hover:text-red-400 py-2">Marketplace</RouterLink>
         <RouterLink to="/shop" class="hover:text-red-400 py-2">Shop</RouterLink>
         <RouterLink to="/inventory" class="hover:text-red-400 py-2">Inventory</RouterLink>

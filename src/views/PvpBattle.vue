@@ -454,14 +454,14 @@ export default {
       v-if="showHistory"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
   >
-    <div class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-gray-900 shadow-2xl">
+    <div class="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
       <div class="flex items-center justify-between border-b border-gray-700 px-4 py-4 sm:px-6">
         <h3 class="text-lg font-bold text-white sm:text-xl">PVP BATTLES History</h3>
         <button
-            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
             @click="closeHistoryModal()"
         >
-          Close
+          ✕
         </button>
       </div>
 
@@ -507,14 +507,14 @@ export default {
       v-if="showMyHistory"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
   >
-    <div class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-gray-900 shadow-2xl">
+    <div class="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
       <div class="flex items-center justify-between border-b border-gray-700 px-4 py-4 sm:px-6">
         <h3 class="text-lg font-bold text-white sm:text-xl">My PVP History</h3>
         <button
-            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
             @click="closeMyHistoryModal()"
         >
-          Close
+          ✕
         </button>
       </div>
 
