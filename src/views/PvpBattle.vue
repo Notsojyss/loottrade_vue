@@ -97,15 +97,16 @@ export default {
          * @returns {Promise<void>}
          */
         async handleJoin(user_id, pvpId, money_betted, username) {
+          const toast = useToast();
             const canJoin = await this.checkUserisNotHost(user_id, pvpId);
             if (!canJoin) {
-                alert("You cannot join your own battle.");
+              toast.error("You cannot join your own battle.");
                 return;
             }
 
             const hasEnoughMoney = await this.checkUserHasEnoughMoney(user_id, pvpId);
             if (!hasEnoughMoney) {
-                alert("You do not have enough money to join this battle.");
+                toast.error("You do not have enough money to join this battle.");
                 return;
             }
             this.selectedPvpMoneybetted =  money_betted;
@@ -433,7 +434,7 @@ export default {
             </p>
 
             <button
-                class="rounded-lg bg-red-500 px-4 py-2 font-medium text-white transition hover:bg-red-600"
+                class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
                 @click="handleJoin(user.id, pvp.id, pvp.money_betted, pvp.user.first_name)"
             >
               Join Battle
