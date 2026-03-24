@@ -143,8 +143,7 @@ export const usePvpStore = defineStore("pvp", {
                     },
                 });
 
-                console.log("Fetched Host Play:", response.data.host_play);
-                return response.data.host_play; // Directly return the value without storing it
+                return response.data;
             } catch (error) {
                 console.error("Error fetching host play:", error);
                 return null;

@@ -109,8 +109,6 @@ export default {
             this.showPickPlayModal = true;
             this.selectedPvpId = pvpId;
 
-            this.selectedPvpIdHostPlay = await this.pvpStore.fetchHostPlay(pvpId);
-            console.log("Host Play:", this.selectedPvpIdHostPlay);
 
         },
         /**
@@ -156,13 +154,23 @@ export default {
          * Selecting a play for the opponent of the battle
          * @param play
          */
-        handleSelectPlay(play) {
-            if (confirm(`Are you sure you want to select "${play}"?`)) {
-                this.selectedPlay = this.selectedPvpIdHostPlay;
-                this.playConfirmed = true;
-                this.pvpStore.selectPlay(play, this.selectedPvpId);
+        async handleSelectPlay(play) {
+          if (confirm(`Are you sure you want to select "${play}"?`)) {
+            this.playConfirmed = true;
 
+            // player's chosen play
+            this.selectedPlay = play;
+
+            // submit player choice
+            await this.pvpStore.selectPlay(play, this.selectedPvpId);
+
+            // fetch host play and store it separately
+            const hostPlayData = await this.pvpStore.fetchHostPlay(this.selectedPvpId);
+
+            if (hostPlayData) {
+              this.selectedPvpIdHostPlay = hostPlayData.host_play;
             }
+          }
         },
         /**
          * closing modal
@@ -176,6 +184,7 @@ export default {
              this.selectedPlay = null;
              this.hoveredPlay = null;
              this.playConfirmed = false;
+             this.selectedPvpIdHostPlay = null;
 
 
 
@@ -255,1061 +264,506 @@ export default {
 
 <template>
 
-    <div class = "sortingbet">
-        <label for="sortAmount">Sort : </label>
-        <select v-model="sortAmount">
-            <option value="0">All</option>
-            <option value="100">100</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-            <option value="2000">2000</option>
-        </select>
-    </div>
-    <div class="container">
-        <h2 class="title">PVP BATTLES</h2>
 
-        <button class="create-btn"  @click="showCreateBattleModal = true">Create Battle</button>
-        <button class="history-btn" @click="showMyHistoryModal()"> My PVP History  </button>
-      <button @click="toggleLeaderboard()" class="leaderboard-button">🏆Leaderboard </button>
-        <button @click="showHistoryModal()" class="mypvphistory-button"> ⓘ PVP Battle Logs</button>
+  <!-- Main Container -->
+  <div class="px-4 py-6">
+    <div class="mx-auto max-w-7xl">
+      <h2 class="mb-6 text-center text-2xl font-bold text-white sm:text-3xl">
+        PVP BATTLES
+      </h2>
 
-        <div v-if="pvpbattles.length > 0" class="listing-grid">
+      <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
-            <div v-for="pvp in sortedBattles" :key="pvp.id" class="listing-card">
-                <div class="listing-header">
-                    <h2 class="host-name">Host: {{ shortenHostname(pvp.user.first_name) }}</h2>
+        <!-- LEFT SIDE -->
+        <div class="flex flex-wrap gap-2">
+          <button
+              @click="toggleLeaderboard()"
+              class="rounded-lg bg-yellow-500 px-4 py-2 font-medium text-black hover:bg-yellow-400"
+          >
+            🏆 Leaderboard
+          </button>
 
-                </div>
-                <div>
-                    <img src="../assets/pvpgame.png" alt="Market" class="nav-icon" />
-                </div>
-                <div class="listing-body">
-                    <p class="wager"><img alt="Coin Image" class="coin-icon" src="/src/assets/rotating-coin.gif" width="30" height="30" />{{ pvp.money_betted }}</p>
+          <button
+              @click="showHistoryModal()"
+              class="rounded-lg bg-gray-700 px-4 py-2 font-medium text-white hover:bg-gray-600"
+          >
+            ⓘ PVP Battle Logs
+          </button>
 
-                    <button class="join-btn" @click= "handleJoin(user.id,pvp.id,pvp.money_betted,pvp.user.first_name )">Join Battle</button>
-                </div>
-            </div>
+          <button
+              @click="showMyHistoryModal()"
+              class="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700"
+          >
+            My PVP History
+          </button>
         </div>
-        <p v-else class="no-listing">No active listings available.</p>
-    </div>
 
+        <!-- RIGHT SIDE -->
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
 
-    <div v-if="showHistory" class="overlay-history">
-        <div class="popup-history">
-            <div class="popup-header">
-                <h3>PVP BATTLES History</h3>
-                <button class="show-history-close-btn" @click="closeHistoryModal()">Close</button>
-            </div>
+          <!-- Sort -->
+          <div class="flex items-center gap-2">
+            <label for="sortAmount" class="text-sm text-white">Sort:</label>
+            <select
+                id="sortAmount"
+                v-model="sortAmount"
+                class="rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-red-400"
+            >
+              <option value="0">All</option>
+              <option value="100">100</option>
+              <option value="500">500</option>
+              <option value="1000">1000</option>
+              <option value="2000">2000</option>
+            </select>
+          </div>
 
-            <div class="market-history-loading" v-if="loading">Loading history...</div>
-
-            <div v-else-if="pvphistory.length > 0" class="market-history-container">
-                <table class="market-history-table">
-                    <thead>
-                    <tr>
-
-                        <th>Host</th>
-                        <th>Versus</th>
-                        <th>Opponent</th>
-                        <th>Bet</th>
-                        <th>Winner</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="pvp in pvphistory" :key="pvp.id">
-                      <td>{{ pvp.hostname }}</td>
-                        <td>VS</td>
-                        <td>{{ pvp.opponentname }}</td>
-                        <td>{{ pvp.money_betted }}</td>
-                        <td>{{ pvp.winnername }}</td>
-                        <td>{{ pvp.battletime }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div v-else class="no-history-message">
-                No history available.
-            </div>
+          <!-- Create Battle -->
+          <button
+              class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+              @click="showCreateBattleModal = true"
+          >
+            Create Battle
+          </button>
         </div>
-    </div>
 
-    <div v-if="showMyHistory" class="overlay-history">
-        <div class="popup-history">
-            <div class="popup-header">
-                <h3>My Pvp History</h3>
-                <button class="show-history-close-btn" @click="closeMyHistoryModal()">Close</button>
-            </div>
-
-            <div class="market-history-loading" v-if="loading">Loading history...</div>
-
-            <div v-else-if="mypvphistory.length > 0" class="market-history-container">
-                <table class="market-history-table">
-                    <thead>
-                    <tr>
-
-                        <th>Host</th>
-                        <th>Versus</th>
-                        <th>Opponent</th>
-                        <th>Bet</th>
-                        <th>Winner</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="mypvp in mypvphistory" :key="mypvp.id">
-                        <td>{{ mypvp.hostname }}</td>
-                        <td>VS</td>
-                        <td>{{ mypvp.opponentname }}</td>
-                        <td>{{ mypvp.money_betted }}</td>
-                        <td>{{ mypvp.winnername }}</td>
-                        <td>{{ mypvp.battletime }}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div v-else class="no-history-message">
-                No history available.
-            </div>
-        </div>
-    </div>
-
-
-
-
-
-
-
-    <!--          Modal For Picking a Play opponents joining a Battle              -->
-    <div v-if="showPickPlayModal" class="modal-overlay-bg">
-        <div class="modal-pick-play">
-            <div class="modal-pick-play-header">
-                <h3 class="pick-play-header-select">Select your Play:</h3>
-                <h3 class="host-name-pick-play">{{selectedPvpUsername.toLowerCase()}}</h3>
-                <h3 class="opponent-pick-play">{{this.user.username.toLowerCase()}}</h3>
-                <button class="modal-play-close-btn" @click="handleClose()">Close</button>
-            </div>
-
-            <!-- Play Selection List -->
-            <div class="play-selection-list">
-                <!-- Host play image remains a question mark until play is selected -->
-                <img class="hostplayimg" :src="playImages[selectedPlay || 'Default']" alt="Host Play" />
-
-                <!-- Opponent play image changes on hover -->
-                <img class="opponentplayimg" :src="hoveredPlay ? playImages[hoveredPlay] : playImages['Default']" alt="Opponent Play" />
-
-                <p class="bet-text">Bet: {{ selectedPvpMoneybetted }}</p>
-                <p class="pvpresult">{{ this.pvpStore.winMessage }}</p>
-
-                <!-- Play Options -->
-                <div v-if="!playConfirmed">
-                    <button
-                        @mouseover="hoveredPlay = 'Rock'"
-                        @mouseleave="hoveredPlay = null"
-                        @click="handleSelectPlay('Rock')"
-                        class="play-option">
-                        <img :src="playImages['Rock']" alt="Rock" />
-                        <h3>Rock</h3>
-                    </button>
-
-                    <button
-                        @mouseover="hoveredPlay = 'Paper'"
-                        @mouseleave="hoveredPlay = null"
-                        @click="handleSelectPlay('Paper')"
-                        class="play-option">
-                        <img :src="playImages['Paper']" alt="Paper" />
-                        <h3>Paper</h3>
-                    </button>
-
-                    <button
-                        @mouseover="hoveredPlay = 'Scissor'"
-                        @mouseleave="hoveredPlay = null"
-                        @click="handleSelectPlay('Scissor')"
-                        class="play-option">
-                        <img :src="playImages['Scissor']" alt="Scissors" />
-                        <h3>Scissor</h3>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <p v-else hidden></p>
-
-
-
-    <!-- Modal For Picking a Play & Bet (Create Battle) -->
-  <div v-if="showCreateBattleModal" class="modal-create-battle-overlay" @click.self="showCreateBattleModal = false">
-    <div class="modal-create-battle">
-      <div class="modal-create-battle-header">
-        <h3>CREATING A PVP BATTLE</h3>
-        <button class="modal-create-battle-close-btn" @click="showCreateBattleModal = false">Close</button>
       </div>
 
-      <!-- Play Selection -->
-      <div class="modal-create-battle-options">
-        <button @click="selectedPlay = 'Rock'" class="play-option" :class="{ selected: selectedPlay === 'Rock' }">
-          <img src="../assets/rock.png" alt="Rock" />
-          <h3>Rock</h3>
-        </button>
-        <button @click="selectedPlay = 'Paper'" class="play-option" :class="{ selected: selectedPlay === 'Paper' }">
-          <img src="../assets/paper.png" alt="Paper" />
-          <h3>Paper</h3>
-        </button>
-        <button @click="selectedPlay = 'Scissor'" class="play-option" :class="{ selected: selectedPlay === 'Scissor' }">
-          <img src="../assets/scissor.png" alt="Scissors" />
-          <h3>Scissor</h3>
+      <!-- Battle List -->
+      <div
+          v-if="pvpbattles.length > 0"
+          class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      >
+        <div
+            v-for="pvp in sortedBattles"
+            :key="pvp.id"
+            class="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg"
+        >
+          <div class="mb-3">
+            <h2 class="text-lg font-semibold text-white">
+              Host: {{ shortenHostname(pvp.user.first_name) }}
+            </h2>
+          </div>
+
+          <div class="mb-4 flex justify-center">
+            <img
+                src="../assets/pvpgame.png"
+                alt="Market"
+                class="h-28 w-auto rounded-lg object-contain sm:h-32"
+            />
+          </div>
+
+          <div class="flex flex-col gap-4">
+            <p class="flex items-center justify-center gap-2 text-lg font-bold text-yellow-400">
+              <img
+                  alt="Coin Image"
+                  class="h-7 w-7"
+                  src="/src/assets/rotating-coin.gif"
+              />
+              {{ pvp.money_betted }}
+            </p>
+
+            <button
+                class="rounded-lg bg-red-500 px-4 py-2 font-medium text-white transition hover:bg-red-600"
+                @click="handleJoin(user.id, pvp.id, pvp.money_betted, pvp.user.first_name)"
+            >
+              Join Battle
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p v-else class="text-center text-sm text-gray-300 sm:text-base">
+        No active listings available.
+      </p>
+    </div>
+  </div>
+
+  <!-- Global History Modal -->
+  <div
+      v-if="showHistory"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+  >
+    <div class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-gray-900 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-gray-700 px-4 py-4 sm:px-6">
+        <h3 class="text-lg font-bold text-white sm:text-xl">PVP BATTLES History</h3>
+        <button
+            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            @click="closeHistoryModal()"
+        >
+          Close
         </button>
       </div>
 
-      <h3 class="bet-header">Select Your Bet:</h3>
+      <div class="p-4 sm:p-6">
+        <div v-if="loading" class="text-center text-white">Loading history...</div>
 
-      <!-- Bet Selection -->
-      <div class="bet-selection-list">
-        <button @click="selectedBet = 100" class="bet-option" :class="{ selected: selectedBet === 100 }">100</button>
-        <button @click="selectedBet = 500" class="bet-option" :class="{ selected: selectedBet === 500 }">500</button>
-        <button @click="selectedBet = 1000" class="bet-option" :class="{ selected: selectedBet === 1000 }">1000</button>
-        <button @click="selectedBet = 2000" class="bet-option" :class="{ selected: selectedBet === 2000 }">2000</button>
+        <div v-else-if="pvphistory.length > 0" class="overflow-x-auto">
+          <table class="min-w-full border-collapse text-sm text-white">
+            <thead>
+            <tr class="bg-gray-800">
+              <th class="px-4 py-3 text-left">Host</th>
+              <th class="px-4 py-3 text-left">Versus</th>
+              <th class="px-4 py-3 text-left">Opponent</th>
+              <th class="px-4 py-3 text-left">Bet</th>
+              <th class="px-4 py-3 text-left">Winner</th>
+              <th class="px-4 py-3 text-left">Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr
+                v-for="pvp in pvphistory"
+                :key="pvp.id"
+                class="border-t border-gray-700"
+            >
+              <td class="px-4 py-3">{{ pvp.hostname }}</td>
+              <td class="px-4 py-3">VS</td>
+              <td class="px-4 py-3">{{ pvp.opponentname }}</td>
+              <td class="px-4 py-3">{{ pvp.money_betted }}</td>
+              <td class="px-4 py-3">{{ pvp.winnername }}</td>
+              <td class="px-4 py-3">{{ pvp.battletime }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-else class="text-center text-gray-300">No history available.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My History Modal -->
+  <div
+      v-if="showMyHistory"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+  >
+    <div class="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-gray-900 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-gray-700 px-4 py-4 sm:px-6">
+        <h3 class="text-lg font-bold text-white sm:text-xl">My PVP History</h3>
+        <button
+            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            @click="closeMyHistoryModal()"
+        >
+          Close
+        </button>
       </div>
 
-      <button class="confirm-btn-create" @click="handleCreateBattle(selectedPlay, selectedBet)">Confirm Battle</button>
+      <div class="p-4 sm:p-6">
+        <div v-if="loading" class="text-center text-white">Loading history...</div>
+
+        <div v-else-if="mypvphistory.length > 0" class="overflow-x-auto">
+          <table class="min-w-full border-collapse text-sm text-white">
+            <thead>
+            <tr class="bg-gray-800">
+              <th class="px-4 py-3 text-left">Host</th>
+              <th class="px-4 py-3 text-left">Versus</th>
+              <th class="px-4 py-3 text-left">Opponent</th>
+              <th class="px-4 py-3 text-left">Bet</th>
+              <th class="px-4 py-3 text-left">Result</th>
+              <th class="px-4 py-3 text-left">Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr
+                v-for="mypvp in mypvphistory"
+                :key="mypvp.id"
+                class="border-t border-gray-700"
+            >
+              <td class="px-4 py-3">
+                {{ mypvp.host_id === authStore.user.id ? 'You' : mypvp.hostname }}
+              </td>
+              <td class="px-4 py-3">VS</td>
+              <td class="px-4 py-3">
+                {{ mypvp.opponent_id === authStore.user.id ? 'You' : mypvp.opponentname }}
+              </td>
+              <td class="px-4 py-3">{{ mypvp.money_betted }}</td>
+              <td class="px-4 py-3">{{ mypvp.result }}</td>
+              <td class="px-4 py-3">{{ mypvp.battletime }}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-else class="text-center text-gray-300">No history available.</div>
+      </div>
     </div>
   </div>
 
 
 
-  <div>
 
 
-    <!-- Leaderboard Button -->
-
-
-    <div v-if="showLeaderboard" class="leaderboard-popup" @click.self="toggleLeaderboard">
-      <div class="leaderboard-container">
-        <h2 class="leaderboard-title">Most Wins Leaderboard</h2>
-
-        <div class="leaderboard-podium">
-          <div v-if="leaderboard.length >= 2" class="leaderboard-second">
-            <p class="leaderboard-rank">Rank #2</p>
-            <p class="leaderboard-name">{{ shorten(leaderboard[1].first_name) }}</p>
-            <p class="leaderboard-wins">{{ leaderboard[1].wins }} Wins</p>
-            <p class="leaderboard-money">${{ leaderboard[1].total_money_won }}</p>
-          </div>
-
-          <div v-if="leaderboard.length >= 1" class="leaderboard-first">
-            <p class="leaderboard-rank">Rank #1</p>
-            <p class="leaderboard-name">{{ shorten(leaderboard[0].first_name) }}</p>
-            <p class="leaderboard-wins">{{ leaderboard[0].wins }} Wins</p>
-            <p class="leaderboard-money">${{ leaderboard[0].total_money_won }}</p>
-          </div>
-
-          <div v-if="leaderboard.length >= 3" class="leaderboard-third">
-            <p class="leaderboard-rank">Rank #3</p>
-            <p class="leaderboard-name">{{ shorten(leaderboard[2].first_name) }}</p>
-            <p class="leaderboard-wins">{{ leaderboard[2].wins }} Wins</p>
-            <p class="leaderboard-money">${{ leaderboard[2].total_money_won }}</p>
-          </div>
+  <!-- Modal For Picking a Play opponents joining a Battle -->
+  <div
+      v-if="showPickPlayModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+  >
+    <div class="w-full max-w-4xl rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
+      <!-- Header -->
+      <div class="mb-6 flex flex-col gap-3 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-lg font-bold sm:text-xl">Select your Play</h3>
+          <p class="mt-1 text-sm text-gray-300">
+            {{ selectedPvpUsername.toLowerCase() }} vs {{ user.username.toLowerCase() }}
+          </p>
         </div>
 
-        <table class="leaderboard-table">
+        <button
+            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            @click="handleClose()"
+        >
+          Close
+        </button>
+      </div>
+
+      <!-- Main Content -->
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Preview Area -->
+        <div class="flex flex-col items-center justify-center gap-4 rounded-xl bg-gray-800 p-4">
+          <img
+              class="h-28 w-28 object-contain sm:h-36 sm:w-36"
+              :src="playImages[selectedPvpIdHostPlay  || 'Default']"
+              alt="Host Play"
+          />
+
+          <p class="text-sm text-gray-400">VS</p>
+
+          <img
+              class="h-28 w-28 object-contain sm:h-36 sm:w-36"
+              :src="hoveredPlay ? playImages[hoveredPlay] : playImages['Default']"
+              alt="Opponent Play"
+          />
+
+          <p class="text-base font-semibold text-yellow-400">
+            Bet: {{ selectedPvpMoneybetted }}
+          </p>
+
+          <p class="min-h-[24px] text-center text-sm font-medium text-green-400">
+            {{ pvpStore.winMessage }}
+          </p>
+        </div>
+
+        <!-- Options -->
+        <div>
+          <div v-if="!playConfirmed" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <button
+                @mouseover="hoveredPlay = 'Rock'"
+                @mouseleave="hoveredPlay = null"
+                @click="handleSelectPlay('Rock')"
+                class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
+            >
+              <img :src="playImages['Rock']" alt="Rock" class="mb-2 h-16 w-16 object-contain" />
+              <h3 class="font-semibold">Rock</h3>
+            </button>
+
+            <button
+                @mouseover="hoveredPlay = 'Paper'"
+                @mouseleave="hoveredPlay = null"
+                @click="handleSelectPlay('Paper')"
+                class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
+            >
+              <img :src="playImages['Paper']" alt="Paper" class="mb-2 h-16 w-16 object-contain" />
+              <h3 class="font-semibold">Paper</h3>
+            </button>
+
+            <button
+                @mouseover="hoveredPlay = 'Scissor'"
+                @mouseleave="hoveredPlay = null"
+                @click="handleSelectPlay('Scissor')"
+                class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
+            >
+              <img :src="playImages['Scissor']" alt="Scissors" class="mb-2 h-16 w-16 object-contain" />
+              <h3 class="font-semibold">Scissor</h3>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal For Picking a Play & Bet (Create Battle) -->
+  <div
+      v-if="showCreateBattleModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+      @click.self="showCreateBattleModal = false"
+  >
+    <div class="w-full max-w-3xl rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
+      <!-- Header -->
+      <div class="mb-6 flex flex-col gap-3 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <h3 class="text-lg font-bold sm:text-xl">CREATING A PVP BATTLE</h3>
+        <button
+            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+            @click="showCreateBattleModal = false"
+        >
+          Close
+        </button>
+      </div>
+
+      <!-- Play Selection -->
+      <h3 class="mb-3 text-base font-semibold sm:text-lg">Choose Your Play</h3>
+      <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button
+            @click="selectedPlay = 'Rock'"
+            class="flex flex-col items-center rounded-xl border p-4 transition"
+            :class="selectedPlay === 'Rock'
+          ? 'border-red-400 bg-red-500/10'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          <img src="../assets/rock.png" alt="Rock" class="mb-2 h-16 w-16 object-contain" />
+          <h3 class="font-semibold">Rock</h3>
+        </button>
+
+        <button
+            @click="selectedPlay = 'Paper'"
+            class="flex flex-col items-center rounded-xl border p-4 transition"
+            :class="selectedPlay === 'Paper'
+          ? 'border-red-400 bg-red-500/10'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          <img src="../assets/paper.png" alt="Paper" class="mb-2 h-16 w-16 object-contain" />
+          <h3 class="font-semibold">Paper</h3>
+        </button>
+
+        <button
+            @click="selectedPlay = 'Scissor'"
+            class="flex flex-col items-center rounded-xl border p-4 transition"
+            :class="selectedPlay === 'Scissor'
+          ? 'border-red-400 bg-red-500/10'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          <img src="../assets/scissor.png" alt="Scissors" class="mb-2 h-16 w-16 object-contain" />
+          <h3 class="font-semibold">Scissor</h3>
+        </button>
+      </div>
+
+      <!-- Bet Selection -->
+      <h3 class="mb-3 text-base font-semibold sm:text-lg">Select Your Bet</h3>
+      <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <button
+            @click="selectedBet = 100"
+            class="rounded-xl border px-4 py-3 font-semibold transition"
+            :class="selectedBet === 100
+          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          100
+        </button>
+
+        <button
+            @click="selectedBet = 500"
+            class="rounded-xl border px-4 py-3 font-semibold transition"
+            :class="selectedBet === 500
+          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          500
+        </button>
+
+        <button
+            @click="selectedBet = 1000"
+            class="rounded-xl border px-4 py-3 font-semibold transition"
+            :class="selectedBet === 1000
+          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          1000
+        </button>
+
+        <button
+            @click="selectedBet = 2000"
+            class="rounded-xl border px-4 py-3 font-semibold transition"
+            :class="selectedBet === 2000
+          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400'
+          : 'border-gray-700 bg-gray-800 hover:bg-gray-700'"
+        >
+          2000
+        </button>
+      </div>
+
+      <button
+          class="w-full rounded-xl bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700"
+          @click="handleCreateBattle(selectedPlay, selectedBet)"
+      >
+        Confirm Battle
+      </button>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div
+      v-if="showLeaderboard"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+      @click.self="toggleLeaderboard"
+  >
+    <div class="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
+      <button
+          @click="toggleLeaderboard"
+          class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
+      >
+        ✕
+      </button>
+      <h2 class="mb-6 text-center text-2xl font-bold">Most Wins Leaderboard</h2>
+
+      <!-- Podium -->
+      <div class="mb-8 grid gap-4 md:grid-cols-3">
+        <div
+            v-if="leaderboard.length >= 2"
+            class="rounded-2xl bg-gray-800 p-4 text-center shadow-lg"
+        >
+          <p class="text-sm text-gray-400">Rank #2</p>
+          <p class="mt-2 text-lg font-bold">{{ shorten(leaderboard[1].first_name) }}</p>
+          <p class="text-yellow-400">{{ leaderboard[1].wins }} Wins</p>
+          <p class="text-green-400">${{ leaderboard[1].total_money_won }}</p>
+        </div>
+
+        <div
+            v-if="leaderboard.length >= 1"
+            class="rounded-2xl border-2 border-yellow-400 bg-gray-800 p-5 text-center shadow-xl"
+        >
+          <p class="text-sm text-yellow-400">Rank #1</p>
+          <p class="mt-2 text-xl font-bold">{{ shorten(leaderboard[0].first_name) }}</p>
+          <p class="text-yellow-300">{{ leaderboard[0].wins }} Wins</p>
+          <p class="text-green-400">${{ leaderboard[0].total_money_won }}</p>
+        </div>
+
+        <div
+            v-if="leaderboard.length >= 3"
+            class="rounded-2xl bg-gray-800 p-4 text-center shadow-lg"
+        >
+          <p class="text-sm text-gray-400">Rank #3</p>
+          <p class="mt-2 text-lg font-bold">{{ shorten(leaderboard[2].first_name) }}</p>
+          <p class="text-yellow-400">{{ leaderboard[2].wins }} Wins</p>
+          <p class="text-green-400">${{ leaderboard[2].total_money_won }}</p>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse text-sm text-white">
           <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Username</th>
-            <th>Wins</th>
-            <th>Total Money Won</th>
+          <tr class="bg-gray-800">
+            <th class="px-4 py-3 text-left">Rank</th>
+            <th class="px-4 py-3 text-left">Username</th>
+            <th class="px-4 py-3 text-left">Wins</th>
+            <th class="px-4 py-3 text-left">Total Money Won</th>
           </tr>
           </thead>
           <tbody>
-          <tr v-for="(player, index) in leaderboard.slice(3)" :key="player.id">
-            <td>{{ index + 4 }}</td>
-            <td>{{ player.first_name }}</td>
-            <td>{{ player.wins }}</td>
-            <td>${{ player.total_money_won }}</td>
+          <tr
+              v-for="(player, index) in leaderboard.slice(0)"
+              :key="player.id"
+              class="border-t border-gray-700"
+          >
+            <td class="px-4 py-3">{{index+1}}</td>
+            <td class="px-4 py-3">{{ player.first_name }}</td>
+            <td class="px-4 py-3">{{ player.wins }}</td>
+            <td class="px-4 py-3">${{ player.total_money_won }}</td>
           </tr>
           </tbody>
         </table>
-
-        <button @click="toggleLeaderboard" class="leaderboard-close-button">Close</button>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.modal-overlay-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Dark Transparent Background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-body.modal-open {
-    overflow: hidden;
-}
-.modal-create-battle-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6); /* Dark overlay */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
 
-/* Prevents interaction outside modal */
-.modal-create-battle-overlay * {
-  pointer-events: auto;
-}
-.modal-create-battle{
-    position: static;
-    top: 30%;
-    left: 22.5%;
-    border: black solid;
-    border-radius: 12px;
-    justify-content: center;
-    background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-    max-height: 360px;
-    min-height: 360px;
-    min-width: 800px;
-    max-width: 800px;
-    display: flex;
-    align-items: center;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-.modal-create-battle-header{
-    position: fixed;
-    margin-top: -300px;
-    color: white;
-}
-
-.modal-create-battle-options{
-
-    margin-left: 20px;
-
-    display: flex;
-    margin-top: -110px;
-    justify-content: space-evenly;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    width: 1000px;
-
-
-}
-
-.bet-selection-list {
-    display: flex;
-    position: relative;
-    justify-content: center;
-    gap: 10px;
-    top: 450px;
-
-}
-
-.bet-option {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border: 1px solid #000;
-    border-radius: 5px;
-    transition: all 0.2s;
-}
-
-.bet-option:hover {
-    background-color: #ddd;
-}
-
-.confirm-btn-create {
-    display: block;
-    position: absolute;
-    top: 575px;
-    left:965px ;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    width: 150px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.modal-create-battle-close-btn{
-    display: block;
-    position: fixed;
-    top: 575px;
-    left:800px ;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #fd0101;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 150px;
-}
-.modal-pick-play{
-    position: relative;
-    border: black solid;
-    border-radius: 12px;
-    justify-content: center;
-    background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-    max-height: 450px;
-    min-height: 450px;
-    min-width: 800px;
-    max-width: 800px;
-    display: flex;
-    align-items: center;
-    overflow-y: auto;
-    overflow-x: hidden;
-    z-index: 1001;
-}
-
-.modal-pick-play-header{
-    position: absolute;
-    margin-top: -410px;
-    color: white;
-   text-align: center;
-}
-
-.host-name-pick-play{
-  position: absolute;
-  color: white;
-  top: 200px;
-  left: -150px;
-  text-align: center;
-}
-.opponent-pick-play{
-    position: absolute;
-    color: white;
-    top: 200px;
-    left: 235px;
-  text-align: center;
-}
-
-.pick-play-header-select{
-    position: relative;
-    color: white;
-    top:30px;
-    left: 10px;
-
-
-
-}
-.modal-play-close-btn{
-    position: absolute;
-    top: 360px;
-    left: 0px ;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #fd0101;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 150px;
-
-}
-.hostplayimg{
-    position: absolute;
-    top: 50px;
-    left: 130px;
-    width: 150px;
-    height: 150px;
-    border: #cccccc 2px solid;
-    border-radius: 10px;
-    padding: 20px;
-    background: rgba(39, 39, 39, 0.91);
-
-}
-.opponentplayimg{
-    position: absolute;
-    top: 50px;
-    right: 130px;
-    width: 150px;
-    height: 150px;
-    border: #cccccc 2px solid;
-    border-radius: 10px;
-    padding: 20px;
-    background: rgba(39, 39, 39, 0.91);
-
-}
-.play-selection-list {
-
-    margin-left: 20px;
-
-    display: flex;
-    margin-top: 150px;
-    justify-content: space-evenly;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    width: 1000px;
-
-}
-.play-selection-list p{
-     display: flex;
-     position: fixed;
-     justify-content: center;
-     gap: 10px;
-     margin-top: -100px;
-    color: #ffffff;
-
- }
-.bet-text{
-    display: flex;
-    position: absolute;
-    justify-content: center;
-    gap: 10px;
-    top: 450px;
-    color: #ffffff;
-}
-.play-option {
-    position: relative;
-    background: none;
-    border: #aeabab 6px double;
-    border-radius: 5px 5px 20px 20px;
-    cursor: pointer;
-    padding: 50px;
-    height: 100px;
-    width: 100px;
-    color: white;
-}
-.play-option h3{
-    position: absolute;
-    text-align: center;
-    left: 27px;
-    width: 50px;
-    top: 80px;
-
-
-}
-
-.play-option img {
-    position: absolute;
-    margin-top: -50px;
-    padding: 5px;
-    margin-left: -39px;
-    justify-items: center;
-    object-fit: cover ;
-    width: 80px; /* Adjust size */
-    height: 80px;
-    transition: transform 0.2s ease-in-out;
-
-}
-
-.play-option img:hover {
-    transform: scale(1.1);
-}
-
-.confirm-btn:hover {
-    background-color: #218838;
-}
-
-
-
-
-
-    /* Main Container */
-.container {
-  position: relative;
-    text-align: center;
-    background: transparent;
-    padding: 20px;
-    min-width: 1528px;
-    left: -156px;
-    margin-top: 120px;
-    max-height: 650px;
-    min-height: 650px;
-    max-width: 1200px;
-  overflow-x: hidden;
-  overflow-y: hidden;
-}
-
-/* Title */
-.title {
-    position: relative;
-    font-size: 24px;
-    color: #f5ff28;
-    left: -450px;
-    top: -20px;
-    font-weight: bold;
-    font-family: "Brush Script MT";
-    font-size: 40px;
-}
-
-/* Grid layout for battles */
-.listing-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 4fr);
-    gap: 10px;
-    padding: 20px;
-    position: relative;
-    top:-40px;
-    justify-items: center;
-    max-width: 1160px;
-    min-width: 1160px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    min-height: 500px;
-    max-height: 500px;
-  margin-left: 153px;
-}
-
-/* Battle Card */
-    .listing-card {
-        background: linear-gradient(135deg, #222, #444);
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        color: white;
-        transition: transform 0.2s ease-in-out;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        max-width: 220px; /* Adjust size if needed */
-        min-height: 240px;
-        max-height: 240px;
-    }
-
-.listing-card:hover {
-    transform: translateY(-5px);
-}
-
-/* Header */
-.listing-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-
-.nav-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
-
-/* Battle Info */
-.host-name {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.wager {
-    font-size: 16px;
-    margin: 10px 0;
-    position: relative;
-    display: flex;
-    justify-content: center;  /* Center horizontally */
-    align-items: center;
-}
-
-/* Button */
-.create-btn {
-    background: #5de33f;
-    position: relative;
-    top: -75px;
-    right: -570px;
-    color: #222;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 120px;
-    transition: background 0.2s;
-    margin-right: 10px;
-    margin-left: 10px;
-
-}
-.create-btn:hover{
-    color: #d9534f;
-    transform: scale(105%);
-
-}
-.leaderboard-button {
-      position: relative;
-      top: -75px;
-      left: -280px;
-      background: none;
-      font-weight: bold;
-      color: #8e918e;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 150px;
-      transition: background 0.2s;
-      margin-right: 10px;
-      margin-left: 10px;
-
-  }.leaderboard-button:hover {
-       color: red;
-       transform: scale(105%);
-
-
-   }
-.mypvphistory-button {
-    position: relative;
-    top: -75px;
-    left: -300px;
-    background: none;
-    font-weight: bold;
-    color: #8e918e;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 200px;
-    transition: background 0.2s;
-    margin-right: 10px;
-    margin-left: 10px;
-
-}.mypvphistory-button:hover {
-     color: red;
-     transform: scale(105%);
-
-
- }
-.history-btn {
-  background: #a3a1a1;
-  position: relative;
-  top: -75px;
-  right: -560px;
-  font-weight: bold;
-  color: #ffffff;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  width: 130px;
-  transition: background 0.2s;
-  margin-right: 10px;
-  margin-left: 10px;
-}
-.history-btn:hover{
-    transform: scale(105%);
-    color:red;
-
-}
-.join-btn {
-    background: #ffdb4d;
-
-    color: #222;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    width: 120px;
-    transition: background 0.2s;
-    margin-right: 10px;
-    margin-left: 10px;
-}
-
-.join-btn:hover {
-    background: #ffdb4d;
-
-}
-
-/* No Listings Message */
-.no-listing {
-    text-align: center;
-    font-size: 18px;
-    color: gray;
-    margin-top: 20px;
-}
-.nav-icon{
-    height: 60px;
-    width: 120px;
-    object-fit: contain;
-}
-.pvpresult {
-  position: absolute;
-  top: 70%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 50px;
-}
-/* Selected Play & Bet Highlight */
-.selected {
-    border: 2px solid green;
-    background-color: lightgreen;
-}
-.bet-header {
-    position: absolute;
-    top:    485px;
-    color: white;
-}
-
-/* Styling for Bet Selection */
-.bet-selection-list {
-    display: flex;
-    position: fixed;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 75px;
-}
-
-.bet-option {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border: 1px solid #000;
-    border-radius: 5px;
-    transition: all 0.2s;
-}
-
-.bet-option:hover {
-    background-color: #ddd;
-}
-.overlay-history {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.popup-history {
-  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    max-width: 800px;
-    min-width: 800px;
-    animation: fadeIn 0.3s ease-in-out;
-    min-height: 400px;
-    max-height: 400px;
-  color: whitesmoke;
-
-}
-.popup-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-  color: whitesmoke;
-}
-.show-history-close-btn {
-    position: relative;
-    top: 340px;
-    right: 80px;
-    background: red;
-    color: white;
-    border: none;
-    padding: 5px 6px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-.market-history-container{
-    min-height:280px;
-    max-height: 280px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-.market-history-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: none;
-
-}
-
-.market-history-table th{
-    position: sticky;
-    top: 0;
-    background: grey;
-    z-index: 10;
-    padding: 10px;
-    text-align: center;
-    border-bottom: 2px solid #ddd;
-}
-.market-history-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    text-align: center;
-    border: none;
-
-}
-
-
-.leaderboard-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6); /* Dark overlay */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-
-}
-.leaderboard-popup * {
-  pointer-events: auto;
-}
-
-.leaderboard-container {
-  background: linear-gradient(45deg, #121111 1%, #8f8f8f);
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
-  text-align: center;
-  position: relative;
-  z-index: 1000;
-}
-
-/* Close button */
-.leaderboard-close-button {
-  margin-top: 15px;
-  padding: 8px 15px;
-  background: red;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.leaderboard-close-button:hover {
-  background: darkred;
-}
-
-.leaderboard-title {
-  margin-bottom: 10px;
-  color: whitesmoke;
-}
-
-/* Podium styling */
-.leaderboard-podium {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  margin-bottom: 20px;
-  gap: 10px;
-  height: 150px;
-}
-
-.leaderboard-first,
-.leaderboard-second,
-.leaderboard-third {
-  text-align: center;
-  width: 100px;
-  border-radius: 10px;
-  padding: 10px;
-  font-weight: bold;
-  color: white;
-
-}
-
-.leaderboard-first {
-background: gold;
-  height: 160px;
-  width: 120px;
-  color: white; /* Ensures text is readable on black */
-}
-
-.leaderboard-second {
-  background-color: silver;
-  height: 130px;
-  width: 120px;
-}
-
-.leaderboard-third {
-  background-color: #cd7f32;
-  height: 110px;
-  width: 120px;
-}
-
-.leaderboard-rank {
-  font-size: .75rem !important;
-  font-family: Soleil, sans-serif !important;
-
-  position: relative;
-  top:-10px;
-  font-weight: bold;
-  font-variant-caps: normal;
-  color: black;
-  font-family: "Brush Script MT";
-  font-weight: bold;
-
-
-}
-
-.leaderboard-name {
-  font-size: 18px;
-  position: relative;
-  top:-15px;
-  text-transform: uppercase;
-  color: black;
-  font-family: "Brush Script MT";
-  font-weight: bold;
-}
-
-.leaderboard-wins,
-.leaderboard-money {
-  font-size: 14px;
-  position: relative;
-  top:-20px;
-  text-transform: uppercase;
-  color: black;
-  font-family: "Brush Script MT";
-  font-weight: bold;
-}
-
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  color: whitesmoke;
-}
-
-.leaderboard-table th,
-.leaderboard-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-.leaderboard-close-button {
-  margin-top: 10px;
-  background-color: red;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-.sortingbet{
-  position: absolute;
-  top: 230px;
-  left: 59%;
-  transform: translateX(-50%);
-  height: 100px;
-  z-index: 2;
-  color: whitesmoke;
-  font-size: 16px;
-}
-</style>
 
