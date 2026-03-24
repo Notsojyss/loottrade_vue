@@ -1,5 +1,6 @@
 <script>
 import axios from 'axios';
+import { useToast } from "vue-toastification";
 export default {
     data() {
         return {
@@ -21,59 +22,65 @@ export default {
          * @returns {Promise<void>}
          */
         async registerUser() {
-            if (this.form.password !== this.form.confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
-            if (this.form.password.length && this.form.confirmPassword.length < 8) {
-                alert("Password is too short, Minimum Length is 8");
-                return;
-            }
-            if (/\d/.test(this.form.first_name) || /\d/.test(this.form.last_name)) {
-                alert("Names Cannot contain number");
-                return;
-            }
+          const toast = useToast();
 
-            if (this.form.email !== this.form.confirmEmail) {
-                alert("Emails do not match!");
-                return;
-            }
-            const userData = {
-                first_name: this.form.first_name,
-                last_name: this.form.last_name,
-                email: this.form.email,
-                username: this.form.username,
-                password: this.form.password
-            };
-            try {
-                // Send request using Axios
-                const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/create`, userData, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+          if (this.form.password !== this.form.confirmPassword) {
+            toast.error("Passwords do not match!");
+            return;
+          }
 
-                // Handle successful response
-                alert('User registered successfully!');
-                console.log(response.data);
+          if (this.form.password.length < 8 || this.form.confirmPassword.length < 8) {
+            toast.error("Password is too short. Minimum length is 8.");
+            return;
+          }
 
-                // Redirect to login page after successful registration
-                this.$router.push('/loginform');
-            } catch (error) {
-                // Handle error response
-                if (error.response) {
-                    // If there’s a validation error from backend, show those errors
-                    const errors = error.response.data.errors;
-                    let errorMessage = "Registration failed:\n";
-                    for (const field in errors) {
-                        errorMessage += `${field}: ${errors[field].join(', ')}\n`;
-                    }
-                    alert(errorMessage);
-                } else {
-                    console.error('Registration failed:', error);
-                    alert('Failed to register user. Please try again later.');
+          if (/\d/.test(this.form.first_name) || /\d/.test(this.form.last_name)) {
+            toast.error("Names cannot contain numbers.");
+            return;
+          }
+
+          if (this.form.email !== this.form.confirmEmail) {
+            toast.error("Emails do not match!");
+            return;
+          }
+
+          const userData = {
+            first_name: this.form.first_name,
+            last_name: this.form.last_name,
+            email: this.form.email,
+            username: this.form.username,
+            password: this.form.password
+          };
+
+          try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/user/create`,
+                userData,
+                {
+                  headers: {
+                    "Content-Type": "application/json"
+                  }
                 }
+            );
+
+            toast.success(response.data.message || "User registered successfully!");
+            this.$router.push("/loginform");
+          } catch (error) {
+            if (error.response?.data?.errors) {
+              const errors = error.response.data.errors;
+              const errorMessage = Object.entries(errors)
+                  .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+                  .join(" | ");
+
+              toast.error(errorMessage);
+            } else {
+              console.error("Registration failed:", error);
+              toast.error(
+                  error.response?.data?.message ||
+                  "Failed to register user. Please try again later."
+              );
             }
+          }
         }
     }
 };

@@ -69,22 +69,24 @@ export default {
     <div class="w-full max-w-md sm:max-w-lg">
 
       <!-- Title -->
-      <h1 class="mb-8 text-center text-3xl font-bold sm:text-4xl">
-        SIGN IN
-      </h1>
+
 
       <!-- Card -->
       <div class="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg sm:p-6">
 
-        <!-- Logo -->
-        <div class="mb-6 flex justify-center">
-          <img
-              alt="LootTrade Logo"
-              class="h-20 w-auto sm:h-24"
-              src="../../assets/LTlogo.png"
-          />
+        <div class="mb-6 text-center">
+          <div class="mb-4 flex justify-center">
+            <img
+                alt="LootTrade Logo"
+                class="h-20 w-auto sm:h-24"
+                src="../../assets/LTlogo.png"
+            />
+          </div>
+          <h1 class="text-3xl font-bold sm:text-4xl">SIGN IN</h1>
+          <p class="mt-2 text-sm text-gray-400 sm:text-base">
+            Log in to your LootTrade account
+          </p>
         </div>
-
         <!-- Inputs -->
         <div class="flex flex-col gap-4">
           <input
