@@ -53,46 +53,61 @@ export default {
 </script>
 
 <template>
-  <div v-if="!authStore.user" class="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-8">
-    <div
-        class="forms w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl bg-gradient-to-br from-black to-gray-500 p-6 sm:p-8 md:p-10 text-center shadow-xl"
-    >
-      <img
-          alt="Vue logo"
-          class="logo mx-auto mb-4 w-40 sm:w-52 md:w-64 h-auto"
-          src="../../assets/LTlogo.png"
-      />
+  <div v-if="!authStore.user" class="mx-auto bg-gray-900 px-4 py-6 text-white flex items-center justify-center">
+    <div class="w-full max-w-md sm:max-w-lg">
 
-      <h1 class="mb-6 text-2xl sm:text-3xl font-bold text-white">Sign In</h1>
+      <!-- Title -->
+      <h1 class="mb-8 text-center text-3xl font-bold sm:text-4xl">
+        SIGN IN
+      </h1>
 
-      <div class="flex flex-col gap-4">
-        <input
-            v-model="logindata.username"
-            placeholder="Username"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+      <!-- Card -->
+      <div class="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg sm:p-6">
 
-        <input
-            v-model="logindata.password"
-            placeholder="Password"
-            type="password"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+        <!-- Logo -->
+        <div class="mb-6 flex justify-center">
+          <img
+              alt="LootTrade Logo"
+              class="h-20 w-auto sm:h-24"
+              src="../../assets/LTlogo.png"
+          />
+        </div>
 
-        <button
-            @click="loginUser"
-            class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm sm:text-base font-semibold text-white hover:bg-blue-700 transition"
-        >
-          Login
-        </button>
+        <!-- Inputs -->
+        <div class="flex flex-col gap-4">
+          <input
+              v-model="logindata.username"
+              placeholder="Username"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
+
+          <input
+              v-model="logindata.password"
+              placeholder="Password"
+              type="password"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
+
+          <button
+              @click="loginUser"
+              class="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700"
+          >
+            Login
+          </button>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-center text-sm text-gray-300">
+          Don't have an account?
+          <router-link
+              class="ml-1 text-blue-400 hover:text-blue-300 underline"
+              to="/registrationform"
+          >
+            Register
+          </router-link>
+        </p>
+
       </div>
-
-      <p class="login-link mt-5 text-sm sm:text-base text-white">
-        Don't have an account?
-        <router-link class="registertxt ml-1 text-blue-300 hover:text-blue-400 underline" to="/registrationform">
-          Register
-        </router-link>
-      </p>
     </div>
   </div>
 </template>

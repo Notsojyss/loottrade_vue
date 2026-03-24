@@ -80,89 +80,94 @@ export default {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 flex items-center justify-center px-4 py-8">
-    <div
-        class="forms w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl bg-gradient-to-br from-black to-gray-500 p-6 sm:p-8 md:p-10 text-center shadow-xl"
-    >
-      <!-- Logo -->
-      <img
-          alt="Vue logo"
-          class="logo mx-auto mb-4 w-40 sm:w-52 md:w-64 h-auto"
-          src="../../assets/LTlogo.png"
-      />
+  <div class="mx-auto bg-gray-900 px-4 py-6 text-white">
+    <div class="mx-auto flex max-w-3xl items-center justify-center">
+      <div class="w-full rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg sm:p-6 md:p-8">
+        <!-- Header -->
+        <div class="mb-6 text-center">
+          <div class="mb-4 flex justify-center">
+            <img
+                alt="LootTrade Logo"
+                class="h-20 w-auto sm:h-24"
+                src="../../assets/LTlogo.png"
+            />
+          </div>
+          <h1 class="text-3xl font-bold sm:text-4xl">REGISTER</h1>
+          <p class="mt-2 text-sm text-gray-400 sm:text-base">
+            Create your LootTrade account
+          </p>
+        </div>
 
-      <!-- Title -->
-      <h1 class="mb-6 text-2xl sm:text-3xl font-bold text-white">Register</h1>
+        <!-- Form -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <input
+              v-model="form.username"
+              placeholder="Username"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500 sm:col-span-2"
+          />
 
-      <!-- Inputs -->
-      <div class="flex flex-col gap-4">
-        <input
-            v-model="form.username"
-            placeholder="Username"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.first_name"
+              placeholder="First Name"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
 
-        <input
-            v-model="form.password"
-            placeholder="Password"
-            type="password"
-            minlength="8"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.last_name"
+              placeholder="Last Name"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
 
-        <input
-            v-model="form.confirmPassword"
-            placeholder="Confirm Password"
-            type="password"
-            minlength="8"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.email"
+              placeholder="Email"
+              type="email"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
 
-        <input
-            v-model="form.first_name"
-            placeholder="First Name"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.confirmEmail"
+              placeholder="Confirm Email"
+              type="email"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
 
-        <input
-            v-model="form.last_name"
-            placeholder="Last Name"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.password"
+              placeholder="Password"
+              type="password"
+              minlength="8"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
 
-        <input
-            v-model="form.email"
-            placeholder="Email"
-            type="email"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
-
-        <input
-            v-model="form.confirmEmail"
-            placeholder="Confirm Email"
-            type="email"
-            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm sm:text-base outline-none focus:border-blue-500"
-        />
+          <input
+              v-model="form.confirmPassword"
+              placeholder="Confirm Password"
+              type="password"
+              minlength="8"
+              class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+          />
+        </div>
 
         <!-- Button -->
         <button
             @click="registerUser"
-            class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm sm:text-base font-semibold text-white hover:bg-green-700 transition"
+            class="mt-6 w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition hover:bg-green-700"
         >
           Register
         </button>
-      </div>
 
-      <!-- Footer -->
-      <p class="login-link mt-5 text-sm sm:text-base text-white">
-        Already have an account?
-        <router-link
-            class="logintxt ml-1 text-blue-300 hover:text-blue-400 underline"
-            to="/loginform"
-        >
-          Login
-        </router-link>
-      </p>
+        <!-- Footer -->
+        <p class="mt-5 text-center text-sm text-gray-300 sm:text-base">
+          Already have an account?
+          <router-link
+              class="ml-1 text-blue-400 hover:text-blue-300 underline"
+              to="/loginform"
+          >
+            Login
+          </router-link>
+        </p>
+      </div>
     </div>
   </div>
 </template>
