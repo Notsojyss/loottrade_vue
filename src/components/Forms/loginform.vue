@@ -1,6 +1,7 @@
 
 <script>
     import { useAuthStore } from "@/stores/authStore.js";
+    import { useToast } from "vue-toastification";
     import { computed, onMounted } from "vue";
 export default {
         name: "loginform",
@@ -24,30 +25,41 @@ export default {
          * @returns {Promise<void>}
          */
         async loginUser() {
-            try {
+          const toast = useToast();
+
+          try {
             const response = await fetch(import.meta.env.VITE_API_URL + "/api/user/login", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.logindata)
-});
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.logindata)
+            });
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login failed");
-}
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || "Login failed");
+            }
 
-    const data = await response.json();
-    console.log("Login successful:");
-    this.authStore.login(data.user, data.token);
-    await this.authStore.fetchMoney();
+            const data = await response.json();
 
-    alert(data.message);
-    this.$router.push('/landingpage');
-} catch (error) {
-    console.error('Login failed:', error);
-    alert(error.message);
-}
-},
+            this.authStore.login(data.user, data.token);
+            await this.authStore.fetchMoney();
+
+            // ✅ SUCCESS TOAST
+            toast.success(data.message || "Login successful!", {
+              timeout: 2000
+            });
+
+            this.$router.push('/landingpage');
+
+          } catch (error) {
+            console.error('Login failed:', error);
+
+            // ❌ ERROR TOAST
+            toast.error(error.message || "Something went wrong", {
+              timeout: 3000
+            });
+          }
+        },
 }
 };
 </script>
