@@ -94,82 +94,75 @@ export default {
 </script>
 
 <template>
-    <div class="forms">
-        <h1>Edit Profile</h1>
-        <label>Username :</label>
-        <input v-model="form.username" :placeholder="this.authStore.user?.username"  /><br>
-        <label>First Name :</label>
-        <input v-model="form.first_name" :placeholder="this.authStore.user?.first_name"  /><br>
-        <label>Last Name :</label>
-        <input v-model="form.last_name" :placeholder="this.authStore.user?.last_name" /><br>
-        <label>Email :</label>
-        <input v-model="form.email" :placeholder="this.authStore.user?.email" /><br>
-        <button class="update-btn" @click = "updateProfile">Update Profile</button>
+  <div class="min-h-screen bg-gray-900 px-4 py-6 text-white">
+    <div class="mx-auto max-w-3xl">
+      <!-- Header -->
+      <h1 class="mb-8 text-center text-3xl font-bold sm:text-4xl">
+        EDIT PROFILE
+      </h1>
 
-        <br><br>
+      <!-- Form Card -->
+      <div class="rounded-2xl border border-gray-700 bg-gray-800 p-5 shadow-lg sm:p-6">
+        <div class="grid grid-cols-1 gap-4 sm:gap-5">
+          <!-- Username -->
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">
+              Username
+            </label>
+            <input
+                v-model="form.username"
+                :placeholder="authStore.user?.username"
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+            />
+          </div>
 
+          <!-- First Name -->
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">
+              First Name
+            </label>
+            <input
+                v-model="form.first_name"
+                :placeholder="authStore.user?.first_name"
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Last Name -->
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">
+              Last Name
+            </label>
+            <input
+                v-model="form.last_name"
+                :placeholder="authStore.user?.last_name"
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-300">
+              Email
+            </label>
+            <input
+                v-model="form.email"
+                :placeholder="authStore.user?.email"
+                class="w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Button -->
+          <div class="pt-2">
+            <button
+                class="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 sm:w-auto"
+                @click="updateProfile"
+            >
+              Update Profile
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
-<style scoped>
-.forms {
-    position: absolute;
-    top: 200px;
-    left: 650px;
-    width: 600px;
-    height: 630px;
-    padding: 20px;
-    background: linear-gradient(45deg, #000000 90%, #8f8f8f);
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    margin-top: 100px;
-    color: whitesmoke;
-    font-weight: bold;
-}
-
-label {
-    display: block;
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-size: 16px;
-    color: whitesmoke;
-}
-
-input {
-    width: 100%;
-    max-width: 400px;
-    padding: 10px 12px;
-    font-size: 14px;
-    border: 1px solid #bdc3c7;
-    border-radius: 6px;
-    outline: none;
-    box-sizing: border-box;
-    transition: border-color 0.3s ease;
-}
-
-input:focus {
-    border-color: #3498db;
-}
-
-
-.update-btn{
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    width: auto;
-    margin-top: 20px;
-    letter-spacing: 2px;
-    padding: 10px 14px;
-    background: #d9534f;
-    border-radius: 10px;
-    text-align: center;
-}
-.update-btn:hover{
-    background: red;
-}
-</style>
