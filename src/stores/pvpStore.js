@@ -111,9 +111,6 @@ export const usePvpStore = defineStore("pvp", {
                         },
                     });
                 this.fetchPvpBattles();
-                alert(response.data.message);
-                console.log(response.data.message);
-
             } catch (error) {
                 console.error("Error creating battle:", error);
                 if (error.response) {

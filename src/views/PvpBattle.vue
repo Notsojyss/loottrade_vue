@@ -2,6 +2,7 @@
 import {useAuthStore} from "@/stores/authStore.js";
 import {usePvpStore} from "@/stores/pvpStore.js";
 import { computed, onMounted } from "vue";
+import { useToast } from "vue-toastification";
 import axios from 'axios';
 import { ref } from "vue";
 export default {
@@ -27,6 +28,8 @@ export default {
     data() {
         return {
             showPickPlayModal: false,
+            showConfirmPlayModal: false,
+            pendingPlay: null,
             selectedPvpId: null,
             selectedPvpUsername: null,
             selectedPvpMoneybetted: null,
@@ -40,6 +43,7 @@ export default {
             sortAmount: 0,
             hoveredPlay: null,  // Tracks hovered play
             playConfirmed: false, // Tracks if play is selected
+            showCreateBattleConfirmModal: false,
             playImages : {
                 Rock: "/src/assets/rock.png",
                 Paper: "/src/assets/paper.png",
@@ -155,7 +159,9 @@ export default {
          * @param play
          */
         async handleSelectPlay(play) {
-          if (confirm(`Are you sure you want to select "${play}"?`)) {
+          const toast = useToast();
+
+          try {
             this.playConfirmed = true;
 
             // player's chosen play
@@ -170,6 +176,12 @@ export default {
             if (hostPlayData) {
               this.selectedPvpIdHostPlay = hostPlayData.host_play;
             }
+
+            toast.success(`You selected ${play}!`);
+          } catch (error) {
+            console.error("Failed to select play:", error);
+            this.playConfirmed = false;
+            toast.error(error.message || "Failed to select play.");
           }
         },
         /**
@@ -196,19 +208,27 @@ export default {
          * @param money_betted
          * @returns {Promise<void>}
          */
-       async handleCreateBattle(play,money_betted) {
-            if (!this.selectedPlay || !this.selectedBet) {
-                alert("Please select both a play and a bet amount.");
-                return;
-            }
-            console.log(`Creating battle with move: ${this.selectedPlay} and bet: ${this.selectedBet}`);
-           await this.pvpStore.createBattle(play,money_betted);
+        async handleCreateBattle(play, money_betted) {
+          const toast = useToast();
+
+          try {
+            console.log(`Creating battle with move: ${play} and bet: ${money_betted}`);
+
+            await this.pvpStore.createBattle(play, money_betted);
+
+            this.showCreateBattleConfirmModal = false;
             this.showCreateBattleModal = false;
-           await this.authStore.fetchMoney();
-           this.selectedPlay = null;
-           this.selectedBet = null;
 
+            await this.authStore.fetchMoney();
 
+            this.selectedPlay = null;
+            this.selectedBet = null;
+
+            toast.success("Battle created successfully!");
+          } catch (error) {
+            console.error("Failed to create battle:", error);
+            toast.error(error.message || "Failed to create battle.");
+          }
         },
         /**
          * Opening of modal history
@@ -253,6 +273,56 @@ export default {
           this.pvpStore.fetchLeaderboard();
         }
       },
+      openConfirmPlayModal(play) {
+        this.pendingPlay = play;
+        this.showConfirmPlayModal = true;
+      },
+
+      closeConfirmPlayModal() {
+        this.pendingPlay = null;
+        this.showConfirmPlayModal = false;
+      },
+      async confirmSelectedPlay() {
+        const toast = useToast();
+
+        if (!this.pendingPlay) return;
+
+        try {
+          const play = this.pendingPlay;
+
+          this.selectedPlay = play;
+
+          await this.pvpStore.selectPlay(play, this.selectedPvpId);
+
+          const hostPlayData = await this.pvpStore.fetchHostPlay(this.selectedPvpId);
+
+          if (hostPlayData) {
+            this.selectedPvpIdHostPlay = hostPlayData.host_play;
+          }
+
+          this.playConfirmed = true;
+          this.showConfirmPlayModal = false;
+
+          toast.success(`You selected ${play}!`);
+        } catch (error) {
+          toast.error(error.message || "Failed to select play.");
+        } finally {
+          this.pendingPlay = null;
+        }
+      },
+      openCreateBattleConfirmModal() {
+        if (!this.selectedPlay || !this.selectedBet) {
+          const toast = useToast();
+          toast.error("Please select both a play and a bet amount.");
+          return;
+        }
+
+        this.showCreateBattleConfirmModal = true;
+      },
+
+      closeCreateBattleConfirmModal() {
+        this.showCreateBattleConfirmModal = false;
+      }
 
 
     }
@@ -529,7 +599,7 @@ export default {
 
           <img
               class="h-28 w-28 object-contain sm:h-36 sm:w-36"
-              :src="hoveredPlay ? playImages[hoveredPlay] : playImages['Default']"
+              :src="playImages[playConfirmed ? selectedPlay : hoveredPlay || 'Default']"
               alt="Opponent Play"
           />
 
@@ -548,7 +618,7 @@ export default {
             <button
                 @mouseover="hoveredPlay = 'Rock'"
                 @mouseleave="hoveredPlay = null"
-                @click="handleSelectPlay('Rock')"
+                @click="openConfirmPlayModal('Rock')"
                 class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
             >
               <img :src="playImages['Rock']" alt="Rock" class="mb-2 h-16 w-16 object-contain" />
@@ -558,7 +628,7 @@ export default {
             <button
                 @mouseover="hoveredPlay = 'Paper'"
                 @mouseleave="hoveredPlay = null"
-                @click="handleSelectPlay('Paper')"
+                @click="openConfirmPlayModal('Paper')"
                 class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
             >
               <img :src="playImages['Paper']" alt="Paper" class="mb-2 h-16 w-16 object-contain" />
@@ -568,7 +638,7 @@ export default {
             <button
                 @mouseover="hoveredPlay = 'Scissor'"
                 @mouseleave="hoveredPlay = null"
-                @click="handleSelectPlay('Scissor')"
+                @click="openConfirmPlayModal('Scissor')"
                 class="flex flex-col items-center rounded-xl border border-gray-700 bg-gray-800 p-4 transition hover:border-red-400 hover:bg-gray-700"
             >
               <img :src="playImages['Scissor']" alt="Scissors" class="mb-2 h-16 w-16 object-contain" />
@@ -580,6 +650,39 @@ export default {
     </div>
   </div>
 
+  <div
+      v-if="showConfirmPlayModal"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 py-6"
+      @click.self="closeConfirmPlayModal"
+  >
+    <div class="w-full max-w-sm rounded-2xl border border-gray-700 bg-gray-900 p-5 text-white shadow-2xl">
+      <h3 class="mb-3 text-center text-xl font-bold">
+        Select {{ pendingPlay }}?
+      </h3>
+
+      <p class="mb-6 text-center text-sm text-gray-300">
+        Are you sure you want to use
+        <span class="font-semibold text-yellow-400">{{ pendingPlay }}</span>
+        for this battle?
+      </p>
+
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <button
+            @click="confirmSelectedPlay"
+            class="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+        >
+          Confirm
+        </button>
+
+        <button
+            @click="closeConfirmPlayModal"
+            class="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white hover:bg-red-600"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
   <!-- Modal For Picking a Play & Bet (Create Battle) -->
   <div
       v-if="showCreateBattleModal"
@@ -681,10 +784,59 @@ export default {
 
       <button
           class="w-full rounded-xl bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700"
-          @click="handleCreateBattle(selectedPlay, selectedBet)"
+          @click="openCreateBattleConfirmModal"
       >
         Confirm Battle
       </button>
+    </div>
+  </div>
+
+
+  <div
+      v-if="showCreateBattleConfirmModal"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 py-6"
+      @click.self="closeCreateBattleConfirmModal"
+  >
+    <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-5 text-white shadow-2xl">
+      <h3 class="mb-4 text-center text-xl font-bold">
+        Confirm Battle
+      </h3>
+
+      <div class="mb-5 flex justify-center">
+        <img
+            v-if="selectedPlay"
+            :src="playImages[selectedPlay]"
+            :alt="selectedPlay"
+            class="h-20 w-20 object-contain"
+        />
+      </div>
+
+      <div class="space-y-2 text-center text-sm sm:text-base">
+        <p>
+          <span class="text-gray-400">Selected Play:</span>
+          <span class="ml-1 font-semibold text-white">{{ selectedPlay }}</span>
+        </p>
+        <p>
+          <span class="text-gray-400">Selected Bet:</span>
+          <span class="ml-1 font-semibold text-yellow-400">{{ selectedBet }}</span>
+        </p>
+      </div>
+
+      <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+            @click="handleCreateBattle(selectedPlay, selectedBet)"
+            class="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+        >
+          Confirm
+        </button>
+
+        <button
+            @click="closeCreateBattleConfirmModal"
+            class="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white hover:bg-red-600"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   </div>
 

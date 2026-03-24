@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import axios from 'axios'
-
+import { useToast } from "vue-toastification";
 export const useAuthStore = defineStore("auth", {
     state: () => ({
          // user: JSON.parse(localStorage.getItem("user")) || null,
@@ -56,45 +56,37 @@ export const useAuthStore = defineStore("auth", {
          * @param router
          * @returns {Promise<void>}
          */
-        async logout(router) { // Accept router as a parameter
-            const confirmLogout = confirm("Are you sure you want to log out?");
-            if (!confirmLogout) return;
+        async logout(router) {
+            const toast = useToast();
 
             const token = localStorage.getItem("auth_token");
 
             if (!token) {
-                alert("No active session found.");
+                toast.warning("No active session found.");
                 return;
             }
-
             try {
-
-                const response = await fetch(import.meta.env.VITE_API_URL + "/api/user/logout", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
+                const response = await fetch(
+                    import.meta.env.VITE_API_URL + "/api/user/logout",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        }
                     }
-                });
-
+                );
                 if (!response.ok) {
                     throw new Error("Logout failed");
                 }
-
                 this.user = null;
-
                 localStorage.removeItem("auth_token");
                 localStorage.removeItem("user");
-                console.log("Token successfully deleted from API.");
-                alert("User has logged out.");
-                console.log("User has logged out.");
-
-
+                toast.success("Logged out successfully!");
                 router.push("/loginform");
-
             } catch (error) {
                 console.error("Logout error:", error);
-                alert("Error logging out. Please try again.");
+                toast.error("Error logging out. Please try again.");
             }
         }
         ,
