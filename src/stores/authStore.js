@@ -172,8 +172,7 @@ export const useAuthStore = defineStore("auth", {
                 const token = localStorage.getItem("auth_token");
 
                 if (!token) {
-                    console.error("No authentication token found.");
-                    return;
+                    throw new Error("No authentication token found.");
                 }
 
                 const response = await axios.post(
@@ -190,12 +189,14 @@ export const useAuthStore = defineStore("auth", {
                     }
                 );
 
-                alert(response.data.message);
                 await this.fetchUserItems();
                 await this.fetchUserItemsForSale();
+
+                return response.data;
+
             } catch (error) {
                 console.error("Error selling item:", error.response?.data || error.message);
-                alert(error.response?.data?.message || "Failed to sell item.");
+                throw error;
             }
         },
         /**
@@ -205,15 +206,11 @@ export const useAuthStore = defineStore("auth", {
          */
         async cancelListing(listingId) {
             try {
-                const confirmCancel = confirm("Are you sure you want to cancel?");
-                if (!confirmCancel) return;
                 const token = localStorage.getItem("auth_token");
 
                 if (!token) {
-                    console.error("No authentication token found.");
-                    return;
+                    throw new Error("No authentication token found.");
                 }
-
                 const response = await axios.post(
                     import.meta.env.VITE_API_URL + "/api/market/cancelsellitem",
                     {
@@ -225,14 +222,13 @@ export const useAuthStore = defineStore("auth", {
                         },
                     }
                 );
-                alert(response.data.message);
-                console.log("Successfully Cancelled Selling an Item")
                 await this.fetchUserItems();
                 await this.fetchListings();
                 await this.fetchUserItemsForSale();
+                return response.data;
             } catch (error) {
                 console.error("Error canceling listing:", error.response?.data || error.message);
-                alert(error.response?.data?.message || "Failed to cancel listing.");
+                throw error;
             }
         },
         /**
@@ -287,33 +283,34 @@ export const useAuthStore = defineStore("auth", {
         async buyItem({ id, quantity, fromMarket = true, idType = "listing_id" }) {
             try {
                 const token = localStorage.getItem("auth_token");
+
                 if (!token) {
-                    console.error("No authentication token found");
-                    return;
+                    throw new Error("No authentication token found");
                 }
+
                 const requestData = {
                     [idType]: id,
                     quantity,
                     from_market: fromMarket,
                 };
+
                 const response = await axios.post(
                     import.meta.env.VITE_API_URL + "/api/buy-item",
                     requestData,
-                    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            Accept: "application/json"
+                        }
+                    }
                 );
-                this.fetchListings();
-                alert(response.data.message);
+
+                await this.fetchListings();
+
+                return response.data;
             } catch (error) {
-                if (error.response.status === 400) {
-                    alert(error.response.data.error); // Show "Not enough money"
-                }else if (error.response.status === 401) {
-                    alert("Unauthorized. Please log in.");
-                } else if (error.response.status === 404) {
-                    alert("Item or listing not found.");
-                } else {
-                    alert("An unexpected error occurred. Please try again.");
-                }
                 console.error("Error purchasing item:", error.response?.data || error.message);
+                throw error;
             }
         },
         /**

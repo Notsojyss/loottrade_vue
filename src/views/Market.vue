@@ -3,6 +3,7 @@ import axios from "axios";
 import {useAuthStore} from "@/stores/authStore.js";
 import { computed, onMounted } from "vue";
 import { ref } from "vue";
+import { useToast } from "vue-toastification";
 export default {
     name: "Market",
     setup() {
@@ -24,6 +25,8 @@ export default {
         return {
 
             currentView: "buy",
+            pendingBuyListing: null,
+            showBuyConfirmModal: false,
             showModal: false,
             selectedItem: null,
             filteredListings: [],
@@ -31,7 +34,9 @@ export default {
             sellQuantity: 1,
             sellPrice: 0,
             showHistory: false,
-            searchQuery: ""
+            searchQuery: "",
+            showCancelListingModal: false,
+            pendingCancelListing: null,
         };
     },
     computed: {
@@ -61,100 +66,125 @@ export default {
         }
     },
     methods: {
-        /**
-         * open modal for selling item
-         * @param item
-         */
-        openSellModal(item) {
+      /**
+       * open modal for selling item
+       * @param item
+       */
+      openSellModal(item) {
 
-            this.selectedItem = item;
-            this.sellQuantity = 1;
-            this.sellPrice = 0;
-            this.showSellModal = true;
-        },
-        /**
-         * shorten texts
-         * @param shortenText
-         * @returns {string|*}
-         */
-        shorten(shortenText) {
-            return typeof shortenText === 'string' && shortenText.length > 6
-                ? shortenText.substring(0, 6) + "..."
-                : shortenText;
-        },
-        /**
-         * opens a modal that shows the user's items
-         */
-        handlePlaceClick() {
-            this.authStore.fetchUserItems();
-            this.showItems = true;
-        },
-        /**
-         * open the modal to show the filtered items
-         * @param itemName
-         * @param itemId
-         */
-        openModal(itemName, itemId) {
-            this.selectedItem = { name: itemName, id: itemId }; // Store both item name and ID
-            this.filteredListings = this.listings.filter(listing => listing.item_name === itemName);
-            this.showModal = true;
-            this.authStore.fetchListings();
-        },
-        /**
-         * close modal
-         */
-        closeModal() {
-            this.showModal = false;
-            this.selectedItem = null;
-            this.filteredListings = [];
-        },
-        /**
-         * open the history modal
-         * @returns {Promise<void>}
-         */
-        async showHistoryModal(){
+        this.selectedItem = item;
+        this.sellQuantity = 1;
+        this.sellPrice = 0;
+        this.showSellModal = true;
+      },
+      /**
+       * shorten texts
+       * @param shortenText
+       * @returns {string|*}
+       */
+      shorten(shortenText) {
+        return typeof shortenText === 'string' && shortenText.length > 6
+            ? shortenText.substring(0, 6) + "..."
+            : shortenText;
+      },
+      /**
+       * opens a modal that shows the user's items
+       */
+      handlePlaceClick() {
+        this.authStore.fetchUserItems();
+        this.showItems = true;
+      },
+      /**
+       * open the modal to show the filtered items
+       * @param itemName
+       * @param itemId
+       */
+      openModal(itemName, itemId) {
+        this.selectedItem = {name: itemName, id: itemId}; // Store both item name and ID
+        this.filteredListings = this.listings.filter(listing => listing.item_name === itemName);
+        this.showModal = true;
+        this.authStore.fetchListings();
+      },
+      /**
+       * close modal
+       */
+      closeModal() {
+        this.showModal = false;
+        this.selectedItem = null;
+        this.filteredListings = [];
+      },
+      /**
+       * open the history modal
+       * @returns {Promise<void>}
+       */
+      async showHistoryModal() {
 
-          this.showHistory = true;
-            await this.authStore.fetchItemHistory(this.selectedItem.id);
-        },
-        /**
-         * close history modal
-         * @returns {Promise<void>}
-         */
-        async closeHistoryModal(){
+        this.showHistory = true;
+        await this.authStore.fetchItemHistory(this.selectedItem.id);
+      },
+      /**
+       * close history modal
+       * @returns {Promise<void>}
+       */
+      async closeHistoryModal() {
 
-          this.showHistory = false;
-        },
-        /**
-         * Sell user's item
-         * @returns {Promise<void>}
-         */
-        async handleSellItem() {
-            try {
+        this.showHistory = false;
+      },
+      /**
+       * Sell user's item
+       * @returns {Promise<void>}
+       */
+      async handleSellItem() {
+        const toast = useToast();
 
-                await this.authStore.sellItem(this.selectedItem.id, this.sellQuantity, this.sellPrice);
-                console.log(this.selectedItem.id);
-                this.showSellModal = false;
-                this.showItems =false;
-            } catch (error) {
-                console.error("Error selling item:", error);
-            }
-        },
-        /**
-         * for viewing Buy
-         * @returns {Promise<void>}
-         */
-        async handleCurrentView(){
-            this.currentView = 'buy';
-            this.authStore.fetchListings();
+        try {
+          await this.authStore.sellItem(
+              this.selectedItem.id,
+              this.sellQuantity,
+              this.sellPrice
+          );
 
-        },
-        /**
-         * buying item from the market
-         * @param listing
-         * @returns {Promise<void>}
-         */
+          this.showSellModal = false;
+          this.showItems = false;
+
+          // ✅ SUCCESS
+          toast.success(
+              `Listed ${this.sellQuantity}x ${this.selectedItem.item_name} for sale!`
+          );
+
+        } catch (error) {
+          console.error("Error selling item:", error);
+
+          // ❌ ERROR HANDLING
+          if (error.response?.status === 400) {
+            toast.error(error.response.data.message || "Invalid sell request.");
+          } else if (error.response?.status === 401) {
+            toast.error("Unauthorized. Please log in.");
+          } else {
+            toast.error(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to sell item."
+            );
+          }
+        }
+      },
+      /**
+       * for viewing Buy
+       * @returns {Promise<void>}
+       */
+      async handleCurrentView() {
+        this.currentView = 'buy';
+        this.authStore.fetchListings();
+
+      },
+      /**
+       * buying item from the market
+       * @param listing
+       * @returns {Promise<void>}
+       */
       async handleBuyItem(listing) {
+
         try {
           if (confirm(`Are you sure you want to buy this "${listing.item_name}"?`)) {
             await this.authStore.buyItem({
@@ -172,27 +202,116 @@ export default {
           console.error("Purchase failed:", error);
         }
       },
-        /**
-         * rarity css class for items
-         * @param rarity
-         * @returns {string}
-         */
-        rarityClass(rarity) {
-            switch (rarity.toLowerCase()) {
-                case 'epic':
-                    return 'rarity-epic';
-                case 'legendary':
-                    return 'rarity-legendary';
-                case 'rare':
-                    return 'rarity-rare';
-                case 'uncommon':
-                    return 'rarity-uncommon';
-                case 'common':
-                    return 'rarity-common';
-                default:
-                    return '';
-            }
+      /**
+       * rarity css class for items
+       * @param rarity
+       * @returns {string}
+       */
+      rarityClass(rarity) {
+        switch (rarity.toLowerCase()) {
+          case 'epic':
+            return 'rarity-epic';
+          case 'legendary':
+            return 'rarity-legendary';
+          case 'rare':
+            return 'rarity-rare';
+          case 'uncommon':
+            return 'rarity-uncommon';
+          case 'common':
+            return 'rarity-common';
+          default:
+            return '';
         }
+      },
+      openBuyConfirmModal(listing) {
+        this.pendingBuyListing = listing;
+        this.showBuyConfirmModal = true;
+      },
+
+      closeBuyConfirmModal() {
+        this.pendingBuyListing = null;
+        this.showBuyConfirmModal = false;
+      },
+      async confirmBuyItem() {
+        const toast = useToast();
+        const boughtItemName = this.pendingBuyListing.item_name;
+        if (!this.pendingBuyListing) return;
+
+        try {
+
+
+          await this.authStore.buyItem({
+            id: this.pendingBuyListing.id,
+            quantity: this.pendingBuyListing.quantity,
+            idType: "listing_id"
+          });
+
+          await this.authStore.fetchListings();
+          await this.authStore.fetchMoney();
+
+          this.filteredListings = this.listings.filter(
+              item => item.item_name === this.selectedItem.name
+          );
+
+          this.closeBuyConfirmModal();
+
+          toast.success(`Purchased ${boughtItemName}!`);
+        } catch (error) {
+          console.error("Purchase failed:", error);
+
+          if (error.response?.status === 400) {
+            toast.error(error.response.data.error || "You cannot purchase this item.");
+          } else if (error.response?.status === 401) {
+            toast.error("Unauthorized. Please log in.");
+          } else if (error.response?.status === 404) {
+            toast.error("Item or listing not found.");
+          } else {
+            toast.error(
+                error.response?.data?.message ||
+                error.message ||
+                "Purchase failed."
+            );
+          }
+        }
+      },
+      openCancelListingModal(item) {
+        this.pendingCancelListing = item;
+        this.showCancelListingModal = true;
+      },
+
+      closeCancelListingModal() {
+        this.pendingCancelListing = null;
+        this.showCancelListingModal = false;
+      },
+      async confirmCancelListing() {
+        const toast = useToast();
+
+        if (!this.pendingCancelListing) return;
+
+        try {
+          const itemName = this.pendingCancelListing.item_name;
+
+          await this.authStore.cancelListing(this.pendingCancelListing.listing_id);
+
+          this.closeCancelListingModal();
+
+          toast.success(`${itemName} listing cancelled successfully!`);
+        } catch (error) {
+          console.error("Error canceling listing:", error);
+
+          if (error.response?.status === 401) {
+            toast.error("Unauthorized. Please log in.");
+          } else if (error.response?.status === 404) {
+            toast.error("Listing not found.");
+          } else {
+            toast.error(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to cancel listing."
+            );
+          }
+        }
+      }
     }
 };
 </script>
@@ -328,8 +447,8 @@ export default {
             </p>
 
             <button
-                @click="authStore.cancelListing(item.listing_id)"
-                class="w-full rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+                @click="openCancelListingModal(item)"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
             >
               Cancel
             </button>
@@ -344,13 +463,74 @@ export default {
             <p class="mb-4 text-gray-400">Empty</p>
             <button
                 @click="handlePlaceClick()"
-                class="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+                class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
             >
               Sell Item
             </button>
           </div>
         </div>
+        <div
+            v-if="showCancelListingModal"
+            class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 py-6"
+            @click.self="closeCancelListingModal"
+        >
+          <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-5 text-white shadow-2xl">
+            <h3 class="mb-4 text-center text-xl font-bold">
+              Cancel Listing
+            </h3>
 
+            <div v-if="pendingCancelListing" class="mb-5">
+              <div class="mb-4 flex justify-center">
+                <img
+                    v-if="pendingCancelListing.image"
+                    :src="pendingCancelListing.image"
+                    :alt="pendingCancelListing.item_name"
+                    :class="['h-24 w-auto object-contain', rarityClass(pendingCancelListing.rarity)]"
+                />
+              </div>
+
+              <div class="space-y-2 text-center text-sm sm:text-base">
+                <p>
+                  <span class="text-gray-400">Item:</span>
+                  <span class="ml-1 font-semibold">{{ pendingCancelListing.item_name }}</span>
+                </p>
+                <p>
+                  <span class="text-gray-400">Quantity:</span>
+                  <span class="ml-1 font-semibold">{{ pendingCancelListing.quantity }}</span>
+                </p>
+                <p class="flex items-center justify-center gap-2 text-yellow-400">
+                  <span class="text-gray-400">Price Each:</span>
+                  <img
+                      alt="Coin Image"
+                      class="h-5 w-5"
+                      src="/src/assets/rotating-coin.gif"
+                  />
+                  {{ pendingCancelListing.price }}
+                </p>
+              </div>
+            </div>
+
+            <p class="mb-6 text-center text-sm text-gray-300">
+              Are you sure you want to cancel this listing?
+            </p>
+
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                  @click="confirmCancelListing"
+                  class="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white hover:bg-red-600"
+              >
+                Confirm
+              </button>
+
+              <button
+                  @click="closeCancelListingModal"
+                  class="w-full rounded-lg bg-gray-700 px-4 py-3 font-medium text-white hover:bg-gray-600"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
         <!-- Modal for selecting an item to sell -->
         <div
             v-if="showItems"
@@ -358,16 +538,16 @@ export default {
             @click="showItems = false"
         >
           <div
-              class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6"
+              class="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6"
               @click.stop
           >
             <div class="mb-6 flex items-center justify-between border-b border-gray-700 pb-4">
               <h3 class="text-lg font-bold sm:text-xl">Select an Item to Sell</h3>
               <button
-                  class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+                  class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
                   @click="showItems = false"
               >
-                Close
+                ✕
               </button>
             </div>
 
@@ -444,7 +624,7 @@ export default {
               <div class="flex flex-col gap-3 sm:flex-row">
                 <button
                     @click="handleSellItem()"
-                    class="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+                    class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
                 >
                   Confirm Sell
                 </button>
@@ -466,7 +646,7 @@ export default {
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
           @click.self="showModal = false"
       >
-        <div class="max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6">
+        <div class="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
           <div class="mb-6 flex flex-col gap-3 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-lg font-bold sm:text-xl">
               Listings for {{ selectedItem.name }}
@@ -474,16 +654,16 @@ export default {
 
             <div class="flex flex-wrap gap-2">
               <button
-                  class="rounded-lg bg-gray-700 px-4 py-2 font-medium text-white hover:bg-gray-600"
+                  class="absolute right-14 top-4  rounded-lg bg-gray-700 px-4 py-2 font-medium text-white hover:bg-gray-600"
                   @click="showHistoryModal()"
               >
                 History
               </button>
               <button
-                  class="rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+                  class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
                   @click="closeModal"
               >
-                Close
+                ✕
               </button>
             </div>
           </div>
@@ -494,14 +674,14 @@ export default {
               class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 py-6"
               @click.self="showHistory = false"
           >
-            <div class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6">
+            <div class="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 text-white shadow-2xl sm:p-6">
               <div class="mb-6 flex items-center justify-between border-b border-gray-700 pb-4">
                 <h3 class="text-lg font-bold sm:text-xl">Item History</h3>
                 <button
-                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+                    class="absolute right-4 top-4 text-gray-400 hover:text-white text-2xl font-bold"
                     @click="closeHistoryModal()"
                 >
-                  Close
+                  ✕
                 </button>
               </div>
 
@@ -573,8 +753,8 @@ export default {
 
               <div class="sm:w-36">
                 <button
-                    @click="handleBuyItem(listing)"
-                    class="w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+                    @click="openBuyConfirmModal(listing)"
+                    class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
                 >
                   Buy
                 </button>
@@ -584,617 +764,68 @@ export default {
         </div>
       </div>
     </div>
+    <div
+        v-if="showBuyConfirmModal"
+        class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 py-6"
+        @click.self="closeBuyConfirmModal"
+    >
+      <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900 p-5 text-white shadow-2xl">
+        <h3 class="mb-4 text-center text-xl font-bold">
+          Confirm Purchase
+        </h3>
 
+        <div v-if="pendingBuyListing" class="mb-5">
+          <div class="mb-4 flex justify-center">
+            <img
+                :src="pendingBuyListing.image"
+                :alt="pendingBuyListing.item_name"
+                :class="['h-24 w-auto object-contain', rarityClass(pendingBuyListing.rarity)]"
+            />
+          </div>
+
+          <div class="space-y-2 text-center text-sm sm:text-base">
+            <p>
+              <span class="text-gray-400">Item:</span>
+              <span class="ml-1 font-semibold">{{ pendingBuyListing.item_name }}</span>
+            </p>
+            <p>
+              <span class="text-gray-400">Quantity:</span>
+              <span class="ml-1 font-semibold">{{ pendingBuyListing.quantity }}</span>
+            </p>
+            <p class="flex items-center justify-center gap-2 text-yellow-400">
+              <span class="text-gray-400">Total:</span>
+              <img
+                  alt="Coin Image"
+                  class="h-5 w-5"
+                  src="/src/assets/rotating-coin.gif"
+              />
+              {{ pendingBuyListing.price * pendingBuyListing.quantity }}
+            </p>
+            <p>
+              <span class="text-gray-400">Seller:</span>
+              <span class="ml-1 font-semibold">{{ shorten(pendingBuyListing.username) }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button
+              @click="confirmBuyItem"
+              class="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+          >
+            Confirm
+          </button>
+
+          <button
+              @click="closeBuyConfirmModal"
+              class="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white hover:bg-red-600"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-<style scoped>
-.market-header {
-    position: relative;
-    color: #f5ff28;
-    left: -500px;
-    top: -20px;
-    font-weight: bold;
-    font-family: "Brush Script MT";
-    text-align: center;
-    font-size: 40px;
-}
-.market-container {
-  position: relative;
-  text-align: center;
-  background: transparent;
-  padding: 20px;
-  min-width: 1528px;
-  left: -156px;
-  margin-top: 120px;
-  max-height: 650px;
-  min-height: 650px;
-  max-width: 1200px;
-  overflow-x: hidden;
-  overflow-y: hidden;
 
-}
-.toggle-buttons button {
-
-  background: yellow;
-  position: relative;
-  top: -55px;
-  right: -475px;
-  color: #222;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  width: 120px;
-  transition: background 0.2s;
-  margin-right: 10px;
-  margin-left: 1px;
-}
-.toggle-buttons button.active {
-    background-color: #76f47c;
-}
-.sell-container {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  justify-content: start;
-  min-height: 400px ;
-  max-height: 450px;
-  width: 1200px;
-  position: relative;
-
-  top: -50px;
-  right: -150px;
-  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-
-
-}
-.sell-container-header{
-  position: relative;
- color: whitesmoke;
-  top: -40px;
-  text-align: center;
-  left: 500px;
-  width: 200px;
-  cursor: text;
-}
-
-.sell-grid {
-  position: relative;
-    display: flex;
-    flex-direction: column; /* Ensures items are stacked vertically */
-    justify-items: center;
-    gap: 10px; /* Adds spacing between items */
-  width: 1200px;
-  min-height: 450px ;
-  max-height: 450px;
-  top: -40px;
-  left: 20px;
-}
-.sell-grid-h3{
-    min-width: 200px;
-    text-align: left;
-}.sell-grid-qty{
-    min-width: 150px;
-    text-align: left;
-}
-
-.sell-slot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f8f9fa;
-    padding: 15px;
-  background: linear-gradient(135deg, #222, #444);
-    text-align: center;
-    min-height: 100px;
-    max-height: 100px;
-  border-radius: 5px;
-  width: 1182px;
-  border: #ffffff solid 2px;
-  margin-left: -10px;
-  position: relative;
-  top:10px ;
-
-
-
-    //min-height: 100px;
-    //max-height: 100px;
-}
-.sell-slot h3, p{
-  color: whitesmoke;
-}
-
-.item-image {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 5px;
-  padding: 10px;
-  background: #b5dddd;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-.modal-content-buy-list {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: fixed;
-  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    left: 362px;
-    max-width: 1200px;
-    min-width: 1200px;
-    min-height: 620px;
-    max-height: 620px;
-    border: black solid 2px;
-}
-.modal-content-buy-list-header h2{
-  color: whitesmoke;
-}
-
-.modal-content-buy-list .close-btn{
-    position: absolute;
-    top: 555px;
-    right: 565px;
-}
-
-.listing-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    justify-content: start;
-    min-height: 450px ;
-    max-height: 450px;
-    width: 1200px;
-  position: relative;
-
-    top: -95px;
-    right: -150px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-
-
-}
-.view-listing-btn{
-position: fixed;
-    margin-top: -20px;
-
-}
-
-.listing-card {
-    padding: 15px;
-    border-radius: 5px;
-    width: 1162px;
-    text-align: center;
-    border: #ffffff solid 2px;
-    min-height: 100px;
-    max-height: 100px;
-  margin-left: 12px;
-
-  background: linear-gradient(135deg, #222, #444);
-}
-
-.listing-image {
-    position: relative;
-    left: -500px;
-    top: -12px;
-    width: 90px;
-    height: 90px;
-    border-radius: 5px;
-  padding: 10px;
-    object-fit: cover;
-}
-
-button {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-
-
-.listings-container {
-    flex-grow: 1;  /* Takes up remaining space */
-    overflow-y: auto;
-    overflow-x: hidden;/* Enables scrolling */
-    min-height: 360px;
-    max-height: 360px;
-    padding: 10px;
-}
-
-.listing-row {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 5px;
-  background: linear-gradient(135deg, #222, #444);
-    width: 100%;
-    min-width: 0;
-    min-height: 100px;
-    max-height: 100px;
-
-}
-
-.listing-image-small {
-    width: 80px;
-    height: 80px;
-    border-radius: 5px;
-}
-
-.listing-details {
-
-    flex: 1;
-    text-align: left;
-    min-width: 0;
-}
-
-.close-btn {
-    position: absolute;
-    top: 0px;
-    right: 30px;
-    background-color: red;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-.listing-card .itemNameH3 {
-    position: relative;
-    top: -135px;
-color: whitesmoke;
-    font-weight: bold;
-}
-.listing-card .itemListing {
-    position: relative;
-    top: -75px;
-    right: -330px;
-  color: whitesmoke;
-    font-size: 14px;
-}
-.listing-card .itemNametext {
-    position: relative;
-    top: -132px;
-    font-weight: bold;
-  color: whitesmoke;
-}
-.listing-card button {
-    position: relative;
-    top: -163px;
-    right: -500px;
-    font-weight: bold;
-}
-.listItemname{
-    position: relative;
-    text-align: center;
-    top: 70px;
-    right: 10px;
-    width: 200px;
-  color: whitesmoke;
-  font-weight: bold;
-
-
-}
- .listRarity{
-    position: relative;
-    top: 45px;
-    right: -225px;
-    width: 140px;
-  color: whitesmoke;
-
-}
- .listDescription{
-    position: relative;
-    text-align: center;
-    top: 20px;
-    right: -200px;
-    width: 200px;
-  color: whitesmoke;
-}
- .listQuantity{
-    position: relative;
-    top: 20px;
-    right: -380px;
-  color: whitesmoke;
-}
-.listPrice{
-    position: relative;
-    display: flex;
-    justify-content: center;  /* Center horizontally */
-    align-items: center;
-     top: -5px;
-     right: -70px;
-   color: whitesmoke;
- }
-.listSeller{
-    position: relative;
-    top: -28px;
-  color: whitesmoke;
-    right: -700px;
-}
-.listing-details button{
-    position: relative;
-    top: -70px;
-    right: -870px;
-  width: 100px;
-}
- .listing-image-small{
-    height: 80px;
-    max-width: 80px;
-   padding: 8px;
-   border: purple solid;
-   background: #b5dddd;
-
-
-}
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Dark overlay */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}.modal-overlay-item-listing {
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   background: rgba(0, 0, 0, 0.5);
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   z-index: 1000;
- }
-.modal-content-sell-list {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: fixed;
-  background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  left: 362px;
-  max-width: 1200px;
-  min-width: 1200px;
-  min-height: 620px;
-  max-height: 620px;
-  border: black solid 2px;
-}
-.modal-content-sell-list .modal-content-sell-list-close-btn{
-  position: absolute;
-  top: 555px;
-  right: 565px;
-}
-
-.modal-content-sell-input{
-  background:#373737FF;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    padding: 2rem;
-    width: 280px;
-    text-align: center;
-}
-.modal-content-sell-input h3,
-.modal-content-sell-input label{
-  color: white;
-}
-
-.item-list{
-    flex-grow: 1;  /* Takes up remaining space */
-    overflow-y: auto;
-    overflow-x: hidden;/* Enables scrolling */
-    min-height: 400px;  /* Ensures it fills the modal */
-    max-height: 400px;  /* Ensures it fills the modal */
-    padding: 10px;
-
-}
-
-
-/* Flex container for each item */
-.item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-  color: whitesmoke;
-
-}
-
-/* Item image styling */
-.item-image {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-
-
-button {
-    margin-top: 15px;
-    padding: 8px 15px;
-    background: #d9534f;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #c9302c;
-}
-
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.popup-history {
-    background: linear-gradient(45deg, #373737 60%, #8f8f8f);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    max-width: 800px;
-    min-width: 800px;
-    animation: fadeIn 0.3s ease-in-out;
-    min-height: 400px;
-    max-height: 400px;
-    color: whitesmoke;
-}
-.market-history-table th{
-    position: sticky;
-    top: 0;
-    background: grey;
-    z-index: 10;
-    padding: 10px;
-    text-align: center;
-    border-bottom: 2px solid #ddd;
-}
-
-.popup-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-}
-.market-history-container{
-    min-height:280px;
-    max-height: 280px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-.market-history-table {
-    width: 100%;
-    border-collapse: collapse;
-
-}
- .market-history-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-
-
-}
-
-
-.show-history-close-btn {
-    position: relative;
-    top: 335px;
-    right: 50px;
-    background: red;
-    color: white;
-    border: none;
-    padding: 5px 6px;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.no-history-message {
-    text-align: center;
-    padding: 10px;
-    color: #777;
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-.market-listings-header{
-  color: whitesmoke;
-  position: relative;
-  top: -50px;
- }
-.search-input {
-  width: 62.5%;
-  position: relative;
-  top: -90.5px;
-  left: -130px;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background: linear-gradient(135deg, #222, #444);
-  font-size: 16px;
-  color: whitesmoke;
-}
-.modal-content-sell-list-header{
-  color: whitesmoke;
-}
-.modal-content-sell-input input[type="number"]::-webkit-outer-spin-button,
-.modal-content-sell-input input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-.price-sell{
-    position: relative;
-    display: flex;
-    align-items: center;
-    min-width: 200px;
-    text-align: left;
-}
-.rarity-epic {
-    background: linear-gradient(135deg, rgba(243, 85, 243, 0.95), rgba(234, 228, 234, 0.8));
-    color: black;
-}
-
-.rarity-legendary {
-    background: linear-gradient(135deg, #f7d700, #ffd700, #ff9900);
-    color: black;
-}
-
-.rarity-rare {
-    background: linear-gradient(135deg, #4d8ee6, #6bb7d3);
-    color: black;
-}
-
-.rarity-uncommon {
-    background: linear-gradient(135deg, #56ab2f, #a8e063);
-    color: black;
-}
-
-.rarity-common {
-    background: linear-gradient(135deg, #f0f0f0, #ffffff);
-    color: black;
-}
-</style>
 
