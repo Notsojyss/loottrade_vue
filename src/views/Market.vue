@@ -198,186 +198,394 @@ export default {
 </script>
 
 <template>
-    <div class="market-container">
-        <h2 class="market-header">MARKET</h2>
-      <h2 class="market-listings-header"><br></h2>
-        <div class="toggle-buttons">
-            <button :class="{ active: currentView === 'buy' }" @click=this.handleCurrentView()>Buy</button>
-            <button :class="{ active: currentView === 'sell' }" @click="currentView = 'sell'">Sell</button>
+  <div class="min-h-screen bg-gray-900 px-4 py-6 text-white">
+    <div class="mx-auto max-w-7xl">
+      <!-- Header -->
+      <h2 class="mb-6 text-center text-2xl font-bold sm:text-3xl">MARKET</h2>
+
+      <!-- Toggle Buttons -->
+      <div class="mb-6 flex justify-center">
+        <div class="flex w-full max-w-md overflow-hidden rounded-xl bg-gray-800">
+          <button
+              :class="[
+              'w-1/2 px-4 py-3 text-sm font-semibold transition sm:text-base',
+              currentView === 'buy'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            ]"
+              @click="this.handleCurrentView()"
+          >
+            Buy
+          </button>
+
+          <button
+              :class="[
+              'w-1/2 px-4 py-3 text-sm font-semibold transition sm:text-base',
+              currentView === 'sell'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            ]"
+              @click="currentView = 'sell'"
+          >
+            Sell
+          </button>
+        </div>
+      </div>
+
+      <!-- BUY VIEW -->
+      <div v-if="currentView === 'buy'">
+        <div class="mb-6">
+          <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search for an item..."
+              class="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-400 focus:border-blue-500 sm:text-base"
+          />
         </div>
 
-        <!-- Buy View: Market Listings -->
-
-        <div v-if="currentView === 'buy'">
-
-            <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search for an item..."
-                class="search-input"
-            />
-
-            <div v-if="filteredGroupedListings.length > 0" class="listing-grid">
-
-                <div v-for="item in filteredGroupedListings" :key="item.item_name" class="listing-card">
-                    <img :src="item.image" :alt="item.item_name":class="['listing-image', rarityClass(item.rarity)]" />
-                    <h3 class="itemListing">Available Listing {{ listingCounts[item.item_id] || 0 }}</h3>
-                    <h3 class="itemNameH3">ITEM</h3>
-                    <h2 class="itemNametext">{{ item.item_name }}</h2>
-                    <button class="view-listing-btn" @click="openModal(item.item_name, item.item_id)">
-                        View Listings
-                    </button>
-                </div>
+        <div
+            v-if="filteredGroupedListings.length > 0"
+            class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          <div
+              v-for="item in filteredGroupedListings"
+              :key="item.item_name"
+              class="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg"
+          >
+            <div class="mb-4 flex justify-center">
+              <img
+                  :src="item.image"
+                  :alt="item.item_name"
+                  :class="['h-32 w-auto object-contain sm:h-36', rarityClass(item.rarity)]"
+              />
             </div>
-            <p v-else></p>
 
+            <h3 class="mb-2 text-center text-sm font-medium text-gray-300">
+              Available Listing {{ listingCounts[item.item_id] || 0 }}
+            </h3>
+
+            <h3 class="text-center text-xs uppercase tracking-wide text-gray-400">
+              Item
+            </h3>
+
+            <h2 class="mb-4 text-center text-lg font-bold text-white">
+              {{ item.item_name }}
+            </h2>
+
+            <button
+                class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
+                @click="openModal(item.item_name, item.item_id)"
+            >
+              View Listings
+            </button>
+          </div>
         </div>
 
+        <p v-else class="text-center text-gray-300"></p>
+      </div>
 
-        <div v-if="currentView === 'sell'" class="sell-container">
-            <h2 class="sell-container-header">Sell Items</h2>
+      <!-- SELL VIEW -->
+      <div v-if="currentView === 'sell'" class="mt-6">
+        <h2 class="mb-6 text-center text-xl font-bold sm:text-2xl">Sell Items</h2>
 
-            <!-- Show items if they exist, otherwise show empty slots -->
-            <div class="sell-grid">
-                <div v-for="(item, index) in userItemsForSale" :key="index" class="sell-slot">
-                    <img v-if="item.image" :src="item.image" alt="Item Image" :class="['item-image', rarityClass(item.rarity)]" />
-                    <h3 class ="sell-grid-h3">{{ item.item_name }}</h3>
-                    <p class="price-sell">Price Each: <img alt="Coin Image" class="coin-icon" src="/src/assets/rotating-coin.gif" width="30" height="30" />{{ item.price }}</p>
-                   <p class="sell-grid-qty">Quantity: {{ item.quantity }}</p>
-                    <p class="price-sell">Total : <img alt="Coin Image" class="coin-icon" src="/src/assets/rotating-coin.gif" width="30" height="30" />{{ item.price * item.quantity }}</p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div
+              v-for="(item, index) in userItemsForSale"
+              :key="index"
+              class="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-lg"
+          >
+            <div class="mb-4 flex justify-center">
+              <img
+                  v-if="item.image"
+                  :src="item.image"
+                  alt="Item Image"
+                  :class="['h-28 w-auto object-contain sm:h-32', rarityClass(item.rarity)]"
+              />
+            </div>
 
+            <h3 class="mb-2 text-center text-lg font-semibold">{{ item.item_name }}</h3>
 
-                    <!-- Cancel Button -->
-                    <button @click="authStore.cancelListing(item.listing_id)" class="cancel-btn">Cancel</button>
+            <p class="mb-2 flex items-center justify-center gap-2 text-yellow-400">
+              Price Each:
+              <img
+                  alt="Coin Image"
+                  class="h-6 w-6"
+                  src="/src/assets/rotating-coin.gif"
+              />
+              {{ item.price }}
+            </p>
+
+            <p class="mb-2 text-center">Quantity: {{ item.quantity }}</p>
+
+            <p class="mb-4 flex items-center justify-center gap-2 text-yellow-400">
+              Total:
+              <img
+                  alt="Coin Image"
+                  class="h-6 w-6"
+                  src="/src/assets/rotating-coin.gif"
+              />
+              {{ item.price * item.quantity }}
+            </p>
+
+            <button
+                @click="authStore.cancelListing(item.listing_id)"
+                class="w-full rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <!-- Empty Slots -->
+          <div
+              v-for="n in Math.max(4 - userItemsForSale.length, 0)"
+              :key="'empty-' + n"
+              class="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-gray-600 bg-gray-800 p-4 text-center"
+          >
+            <p class="mb-4 text-gray-400">Empty</p>
+            <button
+                @click="handlePlaceClick()"
+                class="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+            >
+              Sell Item
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal for selecting an item to sell -->
+        <div
+            v-if="showItems"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+            @click="showItems = false"
+        >
+          <div
+              class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6"
+              @click.stop
+          >
+            <div class="mb-6 flex items-center justify-between border-b border-gray-700 pb-4">
+              <h3 class="text-lg font-bold sm:text-xl">Select an Item to Sell</h3>
+              <button
+                  class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+                  @click="showItems = false"
+              >
+                Close
+              </button>
+            </div>
+
+            <div
+                v-if="items.filter(i => i.item_name).length > 0"
+                class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              <div
+                  v-for="item in items.filter(i => i.item_name)"
+                  :key="item.id"
+                  class="rounded-2xl border border-gray-700 bg-gray-800 p-4"
+              >
+                <div class="mb-4 flex justify-center">
+                  <img
+                      :src="item.image"
+                      :alt="item.item_name"
+                      :class="['h-28 w-auto object-contain sm:h-32', rarityClass(item.rarity)]"
+                  />
                 </div>
 
-                <div
-                    v-for="n in Math.max(4 - userItemsForSale.length, 0)"
-                    :key="'empty-' + n"
-                    class="sell-slot empty"
+                <h3 class="mb-2 text-center text-lg font-semibold">{{ item.item_name }}</h3>
+                <p class="mb-2 text-center text-sm text-gray-300">Rarity: {{ item.rarity }}</p>
+                <p class="mb-4 text-center font-medium">Quantity: {{ item.quantity }}</p>
+
+                <button
+                    @click="openSellModal(item)"
+                    class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
                 >
-                    <p>Empty</p>
-                    <button @click="handlePlaceClick()">Sell Item</button>
-                </div>
+                  Sell
+                </button>
+              </div>
             </div>
 
-            <!-- Modal for selecting an item to sell -->
-            <div v-if="showItems" class="modal-overlay" @click="showItems = false">
-                <div class="modal-content-sell-list" @click.stop>
-                    <div class = "modal-content-sell-list-header">
-                        <h3>Select an Item to Sell:</h3>
-                        <button class = "modal-content-sell-list-close-btn"@click="showItems = false">Close</button>
-                    </div>
-                    <div v-if="items.filter(i => i.item_name).length > 0" class="item-list">
-                        <div v-for="item in items.filter(i => i.item_name)" :key="item.id" class="item">
-                            <img :src="item.image" :alt="item.item_name":class="['item-image', rarityClass(item.rarity)]" />
-                            <h3>{{ item.item_name }}</h3>
-                            <div class="itemrarity">
-                                <p>Rarity: {{ item.rarity }}</p>
-                            </div>
-                            <div class="qtytext">
-                                <p><strong>Quantity: {{ item.quantity }}</strong></p>
-                            </div>
-                            <!-- Sell Button -->
-                            <button @click="openSellModal(item)">Sell</button>
-                        </div>
-
-                    </div>
-                    <p v-else>No items found.</p>
-                </div>
-            </div>
-
-            <!-- Modal for entering quantity and price -->
-            <div v-if="showSellModal" class="modal-overlay">
-                <div class="modal-content-sell-input" @click.stop>
-                    <h3>Sell {{ selectedItem?.item_name }}</h3>
-                    <label>Quantity:</label>
-                    <input type="number" v-model="sellQuantity" :max="selectedItem?.quantity" min="1" />
-                    <br />
-                    <label>Price per Item:</label>
-                    <input type="number" v-model="sellPrice" min="0.01" step="0.01" />
-                    <br/>
-                    <button @click="handleSellItem()">Confirm Sell</button>
-                    <button @click="showSellModal = false">Cancel</button>
-                </div>
-            </div>
-
+            <p v-else class="text-center text-gray-300">No items found.</p>
+          </div>
         </div>
 
+        <!-- Modal for entering quantity and price -->
+        <div
+            v-if="showSellModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+        >
+          <div
+              class="w-full max-w-md rounded-2xl bg-gray-900 p-5 shadow-2xl"
+              @click.stop
+          >
+            <h3 class="mb-5 text-center text-lg font-bold">
+              Sell {{ selectedItem?.item_name }}
+            </h3>
 
+            <div class="space-y-4">
+              <div>
+                <label class="mb-2 block text-sm font-medium">Quantity:</label>
+                <input
+                    type="number"
+                    v-model="sellQuantity"
+                    :max="selectedItem?.quantity"
+                    min="1"
+                    class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 outline-none focus:border-blue-500"
+                />
+              </div>
 
-        <!-- Modal for Item Listings -->
+              <div>
+                <label class="mb-2 block text-sm font-medium">Price per Item:</label>
+                <input
+                    type="number"
+                    v-model="sellPrice"
+                    min="0.01"
+                    step="0.01"
+                    class="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 outline-none focus:border-blue-500"
+                />
+              </div>
 
-        <div v-if="showModal" class="modal-overlay-item-listing" @click.self="showModal = false">
-
-            <div class="modal-content-buy-list">
-                <div class = "modal-content-buy-list-header">
-                    <h2>Listings for {{ selectedItem.name }}</h2>
-
-                    <button class="close-btn" @click="closeModal">Close</button>
-                    <button @click = "showHistoryModal()"> History </button>
-                </div>
-
-                <!-- History Overlay Pop-Up -->
-                <div v-if="showHistory" class="overlay" @click.self="showHistory = false">
-                    <div class="popup-history">
-                        <div class="popup-header">
-                            <h3>Item History</h3>
-                            <button class="show-history-close-btn" @click="closeHistoryModal()">Close</button>
-                        </div>
-
-                        <div class="market-history-loading" v-if="loading">Loading history...</div>
-
-                        <div v-else-if="itemhistory.length > 0" class="market-history-container">
-                            <table class="market-history-table">
-                                <thead>
-                                <tr>
-
-                                    <th>Item Name</th>
-                                    <th>Price Per Item</th>
-                                    <th>Quantity</th>
-                                    <th>Sold on</th>
-                                    <th>Seller</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr v-for="history in itemhistory" :key="history.id">
-                                    <td>{{ history.item_name }}</td>
-                                    <td>{{ history["price per item"] }}</td>
-                                    <td>{{ history.quantity }}</td>
-                                    <td>{{ history.market_updated_at }}</td>
-                                    <td>{{ history.username }}</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div v-else class="no-history-message">
-                            No history available.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="listings-container">
-                    <div v-for="listing in filteredListings" :key="listing.id" class="listing-row">
-                        <img :src="listing.image" :alt="listing.item_name" :class="['listing-image-small', rarityClass(listing.rarity)]" />
-                        <div class="listing-details">
-                            <h3 class="listItemname">{{ listing.item_name }}</h3>
-                            <p class="listRarity"><strong>Rarity:</strong> {{ listing.rarity }}</p>
-                            <p class="listQuantity"><strong>Quantity:</strong> {{ listing.quantity }}</p>
-                            <p class="listPrice"><strong>Price:</strong> <img alt="Coin Image" class="coin-icon" src="/src/assets/rotating-coin.gif" width="30" height="30" />{{ listing.price * listing.quantity }} coins</p>
-                            <p class="listSeller"><strong>Seller:</strong> {{ shorten(listing.username) }}</p>
-                            <button @click="handleBuyItem(listing)">Buy</button>
-                        </div>
-                    </div>
-                </div>
-
-                </div>
-
+              <div class="flex flex-col gap-3 sm:flex-row">
+                <button
+                    @click="handleSellItem()"
+                    class="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+                >
+                  Confirm Sell
+                </button>
+                <button
+                    @click="showSellModal = false"
+                    class="w-full rounded-lg bg-red-500 px-4 py-3 font-medium text-white hover:bg-red-600"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-
+          </div>
         </div>
+      </div>
 
+      <!-- Modal for Item Listings -->
+      <div
+          v-if="showModal"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+          @click.self="showModal = false"
+      >
+        <div class="max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6">
+          <div class="mb-6 flex flex-col gap-3 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-lg font-bold sm:text-xl">
+              Listings for {{ selectedItem.name }}
+            </h2>
+
+            <div class="flex flex-wrap gap-2">
+              <button
+                  class="rounded-lg bg-gray-700 px-4 py-2 font-medium text-white hover:bg-gray-600"
+                  @click="showHistoryModal()"
+              >
+                History
+              </button>
+              <button
+                  class="rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+                  @click="closeModal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+
+          <!-- History Overlay -->
+          <div
+              v-if="showHistory"
+              class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 py-6"
+              @click.self="showHistory = false"
+          >
+            <div class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-gray-900 p-4 shadow-2xl sm:p-6">
+              <div class="mb-6 flex items-center justify-between border-b border-gray-700 pb-4">
+                <h3 class="text-lg font-bold sm:text-xl">Item History</h3>
+                <button
+                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
+                    @click="closeHistoryModal()"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div v-if="loading" class="text-center text-white">Loading history...</div>
+
+              <div v-else-if="itemhistory.length > 0" class="overflow-x-auto">
+                <table class="min-w-full border-collapse text-sm text-white">
+                  <thead>
+                  <tr class="bg-gray-800">
+                    <th class="px-4 py-3 text-left">Item Name</th>
+                    <th class="px-4 py-3 text-left">Price Per Item</th>
+                    <th class="px-4 py-3 text-left">Quantity</th>
+                    <th class="px-4 py-3 text-left">Sold on</th>
+                    <th class="px-4 py-3 text-left">Seller</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr
+                      v-for="history in itemhistory"
+                      :key="history.id"
+                      class="border-t border-gray-700"
+                  >
+                    <td class="px-4 py-3">{{ history.item_name }}</td>
+                    <td class="px-4 py-3">{{ history["price per item"] }}</td>
+                    <td class="px-4 py-3">{{ history.quantity }}</td>
+                    <td class="px-4 py-3">{{ history.market_updated_at }}</td>
+                    <td class="px-4 py-3">{{ history.username }}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div v-else class="text-center text-gray-300">No history available.</div>
+            </div>
+          </div>
+
+          <!-- Listings Container -->
+          <div class="space-y-4">
+            <div
+                v-for="listing in filteredListings"
+                :key="listing.id"
+                class="flex flex-col gap-4 rounded-2xl border border-gray-700 bg-gray-800 p-4 sm:flex-row sm:items-center"
+            >
+              <div class="flex justify-center sm:w-32 sm:shrink-0">
+                <img
+                    :src="listing.image"
+                    :alt="listing.item_name"
+                    :class="['h-24 w-auto object-contain', rarityClass(listing.rarity)]"
+                />
+              </div>
+
+              <div class="flex-1">
+                <h3 class="mb-2 text-lg font-bold">{{ listing.item_name }}</h3>
+                <p class="text-sm text-gray-300"><strong>Rarity:</strong> {{ listing.rarity }}</p>
+                <p class="text-sm text-gray-300"><strong>Quantity:</strong> {{ listing.quantity }}</p>
+                <p class="mt-1 flex items-center gap-2 text-sm text-yellow-400">
+                  <strong class="text-white">Price:</strong>
+                  <img
+                      alt="Coin Image"
+                      class="h-5 w-5"
+                      src="/src/assets/rotating-coin.gif"
+                  />
+                  {{ listing.price * listing.quantity }} coins
+                </p>
+                <p class="text-sm text-gray-300">
+                  <strong>Seller:</strong> {{ shorten(listing.username) }}
+                </p>
+              </div>
+
+              <div class="sm:w-36">
+                <button
+                    @click="handleBuyItem(listing)"
+                    class="w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+                >
+                  Buy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </template>
 <style scoped>
 .market-header {
