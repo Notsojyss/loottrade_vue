@@ -1,6 +1,7 @@
 <script>
 import {useAuthStore} from "@/stores/authStore.js";
 import axios from "axios";
+import { useToast } from "vue-toastification";
 export default {
     name: "UserProfile",
     data() {
@@ -39,54 +40,62 @@ export default {
          * @returns {Promise<void>}
          */
         async updateProfile() {
-            // Validation
-            if (/\d/.test(this.form.first_name) || /\d/.test(this.form.last_name)) {
-                alert("Names cannot contain numbers.");
-                return;
+          const toast = useToast();
+
+          // Validation
+          if (/\d/.test(this.form.first_name) || /\d/.test(this.form.last_name)) {
+            toast.error("Names cannot contain numbers.");
+            return;
+          }
+
+          const userData = {
+            username: this.form.username,
+            first_name: this.form.first_name,
+            last_name: this.form.last_name,
+            email: this.form.email
+          };
+
+          try {
+            const token = localStorage.getItem("auth_token");
+
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/api/user/update`,
+                userData,
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                  }
+                }
+            );
+
+            if (response.status === 200 || response.status === 201) {
+              toast.success(response.data.message || "Profile updated successfully!");
+              await this.authStore.fetchUser();
+            } else {
+              toast.error("Failed to update profile. Please try again.");
             }
 
-            const userData = {
-                username: this.form.username,
-                first_name: this.form.first_name,
-                last_name: this.form.last_name,
-                email: this.form.email
-            };
+          } catch (error) {
+            console.error("Error updating profile:", error);
 
-            try {
-                const token = localStorage.getItem("auth_token");
+            if (error.response && error.response.status === 422) {
+              const errors = error.response.data.errors;
+              const messages = [];
 
-                const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/update`, userData, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+              if (errors.username) messages.push(`Username: ${errors.username[0]}`);
+              if (errors.email) messages.push(`Email: ${errors.email[0]}`);
+              if (errors.first_name) messages.push(`First Name: ${errors.first_name[0]}`);
+              if (errors.last_name) messages.push(`Last Name: ${errors.last_name[0]}`);
 
-                if (response.status === 200 || response.status === 201) {
-                    alert(response.data.message || "Profile updated successfully!");
-                    await this.authStore.fetchUser();
-                } else {
-                    alert("Failed to update profile. Please try again.");
-                }
-
-            } catch (error) {
-                console.error("Error updating profile:", error);
-
-                if (error.response && error.response.status === 422) {
-                    const errors = error.response.data.errors;
-                    let messages = [];
-
-                    if (errors.username) messages.push(`Username: ${errors.username[0]}`);
-                    if (errors.email) messages.push(`Email: ${errors.email[0]}`);
-                    if (errors.first_name) messages.push(`First Name: ${errors.first_name[0]}`);
-                    if (errors.last_name) messages.push(`Last Name: ${errors.last_name[0]}`);
-
-                    alert(messages.join("\n"));
-                } else {
-                    alert("An error occurred while updating the profile.");
-                }
+              toast.error(messages.join(" | "));
+            } else {
+              toast.error(
+                  error.response?.data?.message ||
+                  "An error occurred while updating the profile."
+              );
             }
-
+          }
         }
     }
 }
