@@ -114,14 +114,9 @@ export default {
             await this.authStore.fetchMoney();
 
             this.closeModal();
-
-            // ✅ SUCCESS TOAST
             toast.success(`Bought ${quantity}x ${itemName}!`);
-
           } catch (error) {
             console.error("Shop purchase failed:", error);
-
-            // ❌ ERROR TOAST (based on backend response)
             if (error.response?.status === 400) {
               toast.error(error.response.data.error || "Not enough balance.");
             } else if (error.response?.status === 401) {
