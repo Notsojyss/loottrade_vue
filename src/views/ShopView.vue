@@ -1,7 +1,7 @@
 <script>
 import axios from "axios";
 import { useAuthStore } from "@/stores/authStore.js"; // Import Pinia store
-
+import { useToast } from "vue-toastification";
 export default {
     name: "ShopView",
     setup() {
@@ -96,16 +96,46 @@ export default {
          * @returns {Promise<void>}
          */
         async handleBuyItemfromShop() {
-            if (this.selectedItem) {
-                await this.authStore.buyItem({
-                    id: this.selectedItem.id,
-                    quantity: this.quantities[this.selectedItem.id],
-                    idType: 'item_id',
-                    fromMarket: false
-                });
-                await this.authStore.fetchMoney();
-                this.closeModal();
+          const toast = useToast();
+
+          if (!this.selectedItem) return;
+
+          try {
+            const quantity = this.quantities[this.selectedItem.id];
+            const itemName = this.selectedItem.item_name;
+
+            await this.authStore.buyItem({
+              id: this.selectedItem.id,
+              quantity: quantity,
+              idType: 'item_id',
+              fromMarket: false
+            });
+
+            await this.authStore.fetchMoney();
+
+            this.closeModal();
+
+            // ✅ SUCCESS TOAST
+            toast.success(`Bought ${quantity}x ${itemName}!`);
+
+          } catch (error) {
+            console.error("Shop purchase failed:", error);
+
+            // ❌ ERROR TOAST (based on backend response)
+            if (error.response?.status === 400) {
+              toast.error(error.response.data.error || "Not enough balance.");
+            } else if (error.response?.status === 401) {
+              toast.error("Unauthorized. Please log in.");
+            } else if (error.response?.status === 404) {
+              toast.error("Item not found.");
+            } else {
+              toast.error(
+                  error.response?.data?.message ||
+                  error.message ||
+                  "Purchase failed."
+              );
             }
+          }
         },
         /**
          * to be Used for items background color; class naming

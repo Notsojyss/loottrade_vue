@@ -304,9 +304,7 @@ export const useAuthStore = defineStore("auth", {
                         }
                     }
                 );
-
                 await this.fetchListings();
-
                 return response.data;
             } catch (error) {
                 console.error("Error purchasing item:", error.response?.data || error.message);
